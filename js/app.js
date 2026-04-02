@@ -65,6 +65,7 @@
     if (r === "rare") return "Редкий";
     if (r === "epic") return "Эпический";
     if (r === "legendary") return "Легендарный";
+    if (r === "mythical") return "Мифический";
     return r;
   }
 
@@ -202,10 +203,12 @@
       var hero = result.hero;
       card.className =
         "hero-card " +
-        (hero.rarity === "legendary"
-          ? "legendary"
-          : hero.rarity === "epic"
-            ? "epic"
+        (hero.rarity === "mythical"
+          ? "mythical"
+          : hero.rarity === "legendary"
+            ? "legendary"
+            : hero.rarity === "epic"
+              ? "epic"
               : hero.rarity === "rare"
                 ? "rare"
                 : hero.rarity === "common"

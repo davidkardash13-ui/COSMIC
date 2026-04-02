@@ -33,6 +33,13 @@ var Cases = (function () {
         { id: "legendary", w: 65 },
       ]);
     }
+    if (caseType === "diamond") {
+      return weightedPick([
+        { id: "epic", w: 14 },
+        { id: "legendary", w: 36 },
+        { id: "mythical", w: 50 },
+      ]);
+    }
     return "common";
   }
 
@@ -59,6 +66,7 @@ var Cases = (function () {
 
     rarity = rollRarity(caseType);
     if (caseType === "legendary" && rarity === "common") rarity = "rare";
+    if (caseType === "diamond" && (rarity === "common" || rarity === "rare")) rarity = "epic";
     hero = randomHeroOfRarity(rarity);
     if (!hero) {
       rarity = "common";
@@ -84,7 +92,10 @@ var Cases = (function () {
     var compensationType = "gold";
 
     if (duplicate) {
-      if (hero.rarity === "legendary") {
+      if (hero.rarity === "mythical") {
+        compensation = 140;
+        compensationType = "gems";
+      } else if (hero.rarity === "legendary") {
         compensation = 80;
         compensationType = "gems";
       } else if (hero.rarity === "epic") {
@@ -111,6 +122,7 @@ var Cases = (function () {
     if (caseType === "common") return state.gold >= 150;
     if (caseType === "rare") return state.gems >= 40;
     if (caseType === "legendary") return state.gems >= 120;
+    if (caseType === "diamond") return state.gems >= 280;
     return false;
   }
 
@@ -125,6 +137,7 @@ var Cases = (function () {
     if (caseType === "common") next.gold -= 150;
     else if (caseType === "rare") next.gems -= 40;
     else if (caseType === "legendary") next.gems -= 120;
+    else if (caseType === "diamond") next.gems -= 280;
     return next;
   }
 
