@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Guard — Tower Defense</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="is-loading">
+  <div id="app-loader" class="app-loader" aria-busy="true" aria-live="polite" role="status">
+    <div class="app-loader__inner">
+      <div class="app-loader__rings" aria-hidden="true">
+        <span class="app-loader__ring app-loader__ring--a"></span>
+        <span class="app-loader__ring app-loader__ring--b"></span>
+        <span class="app-loader__core"></span>
+      </div>
+      <div class="app-loader__title">Aether Guard</div>
+      <p class="app-loader__tag">Tower Defense</p>
+      <div class="app-loader__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loader-bar">
+        <span class="app-loader__progress"></span>
+      </div>
+      <p class="app-loader__hint" id="loader-hint">Синхронизация эфира…</p>
+    </div>
+  </div>
+
+  <div class="bg-aurora" aria-hidden="true"></div>
+  <div class="bg-drift" aria-hidden="true"></div>
+  <div class="bg-starfield" aria-hidden="true"></div>
+  <div class="bg-vignette" aria-hidden="true"></div>
+  <div class="film-grain" aria-hidden="true"></div>
+  <div class="particles" id="particles" aria-hidden="true"></div>
+
+  <main id="app">
+    <!-- Главное меню -->
+    <section id="screen-menu" class="screen screen-active">
+      <div class="menu-brand">
+        <h1 class="title-main">Aether Guard</h1>
+        <p class="subtitle">Tower Defense</p>
+      </div>
+      <nav class="menu-buttons">
+        <button type="button" class="btn btn-primary" id="btn-play">Играть</button>
+        <button type="button" class="btn btn-secondary" id="btn-cases">Кейсы с героями</button>
+        <button type="button" class="btn btn-secondary" id="btn-collection">Коллекция</button>
+        <button type="button" class="btn btn-secondary" id="btn-promocodes">Промокоды</button>
+        <button type="button" class="btn btn-secondary" id="btn-reset-progress">Сбросить прогресс</button>
+        <button type="button" class="btn btn-easter-menu hidden" id="btn-menu-easter">Пасхальное событие</button>
+      </nav>
+      <div class="menu-stats">
+        <span class="stat-pill"><span class="stat-label">Золото</span> <strong id="menu-gold">0</strong></span>
+        <span class="stat-pill stat-pill-gem"><span class="stat-label">Кристаллы</span> <strong id="menu-gems">0</strong></span>
+      </div>
+    </section>
+
+    <!-- Выбор сложности перед началом боя -->
+    <div id="difficulty-overlay" class="difficulty-overlay hidden" aria-hidden="true">
+      <div class="difficulty-modal" role="dialog" aria-modal="true" aria-labelledby="difficulty-modal-title">
+        <div class="difficulty-modal-glow" aria-hidden="true"></div>
+        <header class="difficulty-modal-head">
+          <div class="difficulty-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+              <defs>
+                <linearGradient id="diff-grad-a" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#5eead4" />
+                  <stop offset="0.5" stop-color="#818cf8" />
+                  <stop offset="1" stop-color="#c084fc" />
+                </linearGradient>
+              </defs>
+              <path d="M24 4L44 14V34L24 44L4 34V14L24 4Z" stroke="url(#diff-grad-a)" stroke-width="2.2" fill="rgba(15,23,42,0.65)" />
+              <path d="M24 12L34 17.5V28.5L24 34L14 28.5V17.5L24 12Z" fill="url(#diff-grad-a)" opacity="0.35" />
+            </svg>
+          </div>
+          <p class="difficulty-modal-kicker">Подготовка к обороне</p>
+          <h2 id="difficulty-modal-title">Сложность волны</h2>
+        </header>
+        <p class="difficulty-modal-desc" id="difficulty-modal-desc">Выберите сложность перед началом игры. Можно изменить при каждом запуске.</p>
+        <div class="difficulty-bar" role="radiogroup" aria-label="Сложность игры">
+          <span class="difficulty-label">Уровень угрозы</span>
+          <button type="button" class="diff-chip diff-chip--easy" data-difficulty="easy" id="diff-easy">Лёгкая</button>
+          <button type="button" class="diff-chip diff-chip--normal diff-chip--active" data-difficulty="normal" id="diff-normal">Обычная</button>
+          <button type="button" class="diff-chip diff-chip--hard" data-difficulty="hard" id="diff-hard">Сложная</button>
+        </div>
+        <div class="difficulty-modal-actions">
+          <button type="button" class="btn btn-secondary btn-diff-outline" id="btn-diff-cancel">Назад</button>
+          <button type="button" class="btn btn-primary btn-diff-primary" id="btn-diff-start">Начать игру</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Кейсы -->
+    <section id="screen-cases" class="screen screen-cases">
+      <header class="screen-header screen-cases-header">
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-cases-back">← Назад</button>
+        <div class="screen-cases-title">
+          <h2>Сундуки с героями</h2>
+          <p class="screen-cases-sub">Выберите сундук и откройте награду</p>
+        </div>
+      </header>
+      <div class="cases-grid">
+        <article class="case-card case-card--bronze" data-case="common">
+          <span class="case-tier-badge case-tier-badge--bronze">Обычный</span>
+          <div class="case-visual-wrap">
+            <div class="case-visual-glow case-visual-glow--bronze" aria-hidden="true"></div>
+            <div class="case-visual case-common">
+              <span class="case-chest-lid" aria-hidden="true"></span>
+              <span class="case-chest-band" aria-hidden="true"></span>
+              <span class="case-chest-lock case-chest-lock--bronze" aria-hidden="true"></span>
+            </div>
+          </div>
+          <h3 class="case-title case-title--bronze">Бронзовый сундук</h3>
+          <p class="case-desc">Шанс на обычного и редкого героя</p>
+          <p class="case-price"><span class="currency-gold">150</span> золота</p>
+          <button type="button" class="btn btn-chest btn-chest-bronze btn-block btn-open" data-open="common">Открыть сундук</button>
+        </article>
+        <article class="case-card case-card--silver" data-case="rare">
+          <span class="case-tier-badge case-tier-badge--silver">Редкий+</span>
+          <div class="case-visual-wrap">
+            <div class="case-visual-glow case-visual-glow--silver" aria-hidden="true"></div>
+            <div class="case-visual case-rare">
+              <span class="case-chest-lid" aria-hidden="true"></span>
+              <span class="case-chest-band" aria-hidden="true"></span>
+              <span class="case-chest-lock case-chest-lock--silver" aria-hidden="true"></span>
+            </div>
+          </div>
+          <h3 class="case-title case-title--silver">Серебряный сундук</h3>
+          <p class="case-desc">Выше шанс на редких и эпических</p>
+          <p class="case-price"><span class="currency-gem">40</span> кристаллов</p>
+          <button type="button" class="btn btn-chest btn-chest-silver btn-block btn-open" data-open="rare">Открыть сундук</button>
+        </article>
+        <article class="case-card case-card--gold" data-case="legendary">
+          <span class="case-tier-badge case-tier-badge--gold">Легендарный</span>
+          <div class="case-visual-wrap">
+            <div class="case-visual-glow case-visual-glow--gold" aria-hidden="true"></div>
+            <div class="case-visual case-legendary">
+              <span class="case-chest-lid" aria-hidden="true"></span>
+              <span class="case-chest-band" aria-hidden="true"></span>
+              <span class="case-chest-lock case-chest-lock--gold" aria-hidden="true"></span>
+            </div>
+          </div>
+          <h3 class="case-title case-title--gold">Золотой сундук</h3>
+          <p class="case-desc">Гарантирован редкий+ или лучше</p>
+          <p class="case-price"><span class="currency-gem">120</span> кристаллов</p>
+          <button type="button" class="btn btn-chest btn-chest-gold btn-block btn-open" data-open="legendary">Открыть сундук</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- Пасхальное событие (видно только весной, март–май) -->
+    <section id="screen-easter" class="screen screen-easter">
+      <header class="screen-header">
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-easter-back">← Назад</button>
+        <h2>Пасхальное событие</h2>
+      </header>
+      <p class="easter-intro" id="easter-intro-text"></p>
+      <div class="easter-layout">
+        <article class="easter-card easter-chest-card">
+          <div class="easter-chest-ribbon" aria-hidden="true">Весенний сезон</div>
+          <div class="case-visual-wrap">
+            <div class="case-visual-glow case-visual-glow--easter" aria-hidden="true"></div>
+            <div class="case-visual case-easter">
+              <span class="case-chest-lid" aria-hidden="true"></span>
+              <span class="case-chest-band" aria-hidden="true"></span>
+              <span class="case-chest-lock case-chest-lock--easter" aria-hidden="true"></span>
+            </div>
+          </div>
+          <h3 class="easter-chest-title">Пасхальный ящик</h3>
+          <p class="easter-desc">Выпадают только пасхальные герои (редкость «Пасхальный»): Луми-Зайка, Ирис, Флора и Аврора Весны — без обычного пула.</p>
+          <p class="easter-price">Цена: <span class="currency-gold" id="easter-chest-cost">195</span> золота</p>
+          <button type="button" class="btn btn-chest btn-chest-easter btn-block" id="btn-easter-chest-open">Открыть пасхальный ящик</button>
+        </article>
+        <article class="easter-card easter-trial-card">
+          <h3>Весеннее испытание</h3>
+          <p class="easter-desc">Те же 30 волн, но враги крепче и появляются чаще. За победу — дополнительное золото и кристаллы.</p>
+          <button type="button" class="btn btn-chest btn-chest-trial btn-block" id="btn-easter-trial">Начать испытание</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- Коллекция -->
+    <section id="screen-collection" class="screen">
+      <header class="screen-header">
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-collection-back">← Назад</button>
+        <h2>Коллекция</h2>
+      </header>
+      <div class="collection-tabs" role="tablist" aria-label="Раздел коллекции">
+        <button type="button" class="collection-tab is-active" id="tab-heroes" role="tab" aria-selected="true" aria-controls="collection-panel-heroes">Герои</button>
+        <button type="button" class="collection-tab" id="tab-enemies" role="tab" aria-selected="false" aria-controls="collection-panel-enemies">Враги</button>
+      </div>
+
+      <div id="collection-panel-heroes" class="collection-panel" role="tabpanel" aria-labelledby="tab-heroes">
+        <div id="collection-grid" class="collection-grid"></div>
+      </div>
+
+      <div id="collection-panel-enemies" class="collection-panel hidden" role="tabpanel" aria-labelledby="tab-enemies">
+        <p class="collection-section-sub">Справочник типов противников в волнах.</p>
+        <div id="collection-enemies" class="collection-enemies-grid"></div>
+      </div>
+    </section>
+
+    <!-- Игра -->
+    <section id="screen-game" class="screen screen-game">
+      <div class="game-hud game-hud--styled">
+        <button type="button" class="btn btn-game btn-game-nav btn-compact" id="btn-game-exit">← Меню</button>
+        <div class="hud-center">
+          <span class="hud-item">Жизни: <strong id="hud-lives">12</strong></span>
+          <span class="hud-item">Волна: <strong id="hud-wave">1</strong>/<span id="hud-max-waves">30</span></span>
+          <span class="hud-item">Золото: <strong id="hud-gold">0</strong></span>
+          <span class="hud-item hud-gems">Кристаллы: <strong id="hud-gems">0</strong></span>
+        </div>
+        <div class="hud-wave-actions">
+          <button type="button" class="btn btn-game btn-game-wave btn-compact" id="btn-wave" title="Следующая волна">След. волна</button>
+          <button type="button" class="btn btn-game btn-game-auto btn-compact btn-auto-wave" id="btn-auto-wave" title="Автоматически запускать следующую волну после очистки" aria-pressed="false">Авто след. волна</button>
+        </div>
+      </div>
+      <p id="easter-trial-badge" class="easter-trial-badge hidden" role="status">Весеннее испытание: усиленные волны</p>
+      <div class="game-wrap">
+        <div class="canvas-frame">
+          <div class="canvas-frame-glow" aria-hidden="true"></div>
+          <canvas id="game-canvas" width="960" height="520"></canvas>
+        </div>
+        <aside class="tower-panel" id="tower-panel">
+          <h3 class="panel-title">Башни героев</h3>
+          <div class="tower-list" id="tower-list"></div>
+          <p class="panel-hint" id="panel-hint">Пустая клетка — строительство; клик по своей башне — улучшение.</p>
+        </aside>
+      </div>
+      <div id="game-overlay" class="game-overlay hidden">
+        <div class="overlay-card">
+          <h2 id="overlay-title">Победа!</h2>
+          <p id="overlay-text"></p>
+          <button type="button" class="btn btn-primary" id="overlay-btn">В меню</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Анимация открытия кейса -->
+    <div id="case-overlay" class="case-overlay hidden" aria-hidden="true">
+      <div class="case-reveal">
+        <div class="case-box-3d" id="case-box">
+          <div class="case-face case-face-front"></div>
+          <div class="case-face case-face-top"></div>
+        </div>
+        <div class="reveal-card-wrap hidden" id="reveal-card-wrap">
+          <div class="hero-card" id="reveal-hero-card">
+            <div class="hero-card-glow" id="reveal-glow"></div>
+            <div class="hero-portrait" id="reveal-portrait"></div>
+            <div class="hero-card-info">
+              <span class="hero-rarity" id="reveal-rarity"></span>
+              <h3 id="reveal-name"></h3>
+              <p id="reveal-role"></p>
+            </div>
+          </div>
+        </div>
+        <p class="reveal-status" id="reveal-status">Открываем…</p>
+        <button type="button" class="btn btn-primary btn-block hidden" id="reveal-close">Отлично!</button>
+      </div>
+    </div>
+
+    <!-- Промокоды -->
+    <div id="promo-overlay" class="promo-overlay hidden" aria-hidden="true">
+      <div class="promo-modal" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
+        <header class="promo-head">
+          <h2 id="promo-modal-title">Промокоды</h2>
+          <p class="promo-sub">Введите код (без пробелов). Каждый код можно активировать один раз.</p>
+        </header>
+        <div class="promo-body">
+          <label class="promo-label" for="promo-input">Код</label>
+          <input id="promo-input" class="promo-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="32" placeholder="Например: WELCOME" />
+          <div class="promo-actions">
+            <button type="button" class="btn btn-secondary btn-promo-cancel" id="btn-promo-cancel">Назад</button>
+            <button type="button" class="btn btn-primary btn-promo-apply" id="btn-promo-apply">Активировать</button>
+          </div>
+          <p class="promo-status" id="promo-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/heroes.js"></script>
+  <script src="js/season.js"></script>
+  <script src="js/cases.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/td.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
