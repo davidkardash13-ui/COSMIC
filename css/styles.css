@@ -13,8 +13,6 @@
   --rarity-rare: #38bdf8;
   --rarity-epic: #a78bfa;
   --rarity-legendary: #fbbf24;
-  --rarity-easter: #f472b6;
-  --rarity-easter-glow: rgba(244, 114, 182, 0.45);
   --font-ui: "Outfit", system-ui, sans-serif;
   --font-display: "Cinzel", Georgia, serif;
   --radius: 14px;
@@ -95,7 +93,7 @@ body {
   cursor: var(--cursor-aether);
 }
 
-/* Тот же курсор на всех экранах: меню, кейсы, коллекция, пасха, оверлеи */
+/* Тот же курсор на всех экранах: меню, кейсы, коллекция, оверлеи */
 button:not(:disabled),
 .btn:not(:disabled),
 .diff-chip,
@@ -646,9 +644,6 @@ body.view-game .screen-game .game-hud {
   flex-shrink: 0;
 }
 
-body.view-game .screen-game .easter-trial-badge {
-  flex-shrink: 0;
-}
 
 body.view-game .screen-game .game-wrap {
   flex: 1 1 auto;
@@ -877,38 +872,8 @@ body.view-game .tower-list {
 
 .menu-buttons .btn-primary,
 .menu-buttons .btn-secondary,
-.menu-buttons .btn-ghost,
-.menu-buttons .btn-easter-menu {
+.menu-buttons .btn-ghost {
   width: 100%;
-}
-
-.btn-easter-menu {
-  background: var(--btn-surface-title);
-  color: #fce7f3;
-  box-shadow:
-    0 4px 0 #000,
-    0 0 0 1px rgba(244, 114, 182, 0.4),
-    0 10px 28px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(165, 243, 252, 0.15);
-}
-
-.btn-easter-menu:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-  box-shadow:
-    0 6px 0 #000,
-    0 0 0 1px rgba(244, 114, 182, 0.55),
-    0 16px 40px rgba(219, 39, 119, 0.35),
-    inset 0 1px 0 rgba(251, 207, 232, 0.25);
-}
-
-body.season-spring .bg-aurora {
-  background:
-    radial-gradient(ellipse 130% 85% at 18% -5%, rgba(251, 207, 232, 0.24), transparent 52%),
-    radial-gradient(ellipse 105% 65% at 88% 88%, rgba(167, 243, 208, 0.18), transparent 46%),
-    radial-gradient(ellipse 85% 52% at 50% 45%, rgba(196, 181, 253, 0.14), transparent 58%),
-    var(--bg-deep);
-  animation: auroraShift 28s ease-in-out infinite alternate;
 }
 
 .btn-primary {
@@ -1051,27 +1016,6 @@ body.season-spring .bg-aurora {
     0 0 0 1px rgba(251, 191, 36, 0.78),
     0 14px 40px rgba(251, 191, 36, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.btn-chest-easter {
-  background: var(--btn-surface-title);
-  color: #fdf2f8;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-  box-shadow:
-    0 4px 0 #000,
-    0 0 0 1px rgba(244, 114, 182, 0.5),
-    0 10px 28px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(244, 114, 182, 0.2);
-}
-
-.btn-chest-easter:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-  box-shadow:
-    0 6px 0 #000,
-    0 0 0 1px rgba(244, 114, 182, 0.72),
-    0 14px 38px rgba(236, 72, 153, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .btn-chest-trial {
@@ -1294,14 +1238,6 @@ body.season-spring .bg-aurora {
   background: radial-gradient(ellipse 50% 45% at 50% 45%, rgba(251, 191, 36, 0.28), transparent 70%);
 }
 
-.case-visual-glow--easter {
-  background: radial-gradient(
-    ellipse 50% 45% at 50% 45%,
-    rgba(244, 114, 182, 0.26),
-    rgba(167, 139, 250, 0.18) 45%,
-    transparent 70%
-  );
-}
 
 @keyframes caseGlowPulse {
   0%,
@@ -1449,50 +1385,6 @@ body.season-spring .bg-aurora {
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.case-chest-lock--easter {
-  background: linear-gradient(145deg, #fce7f3, #f472b6, #a21caf);
-  box-shadow:
-    0 3px 12px rgba(190, 24, 93, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.case-easter {
-  background: linear-gradient(
-    168deg,
-    #fdf2f8 0%,
-    #f9a8d4 22%,
-    #e879f9 42%,
-    #7c3aed 68%,
-    #1e1b4b 100%
-  );
-  border: 1px solid rgba(244, 114, 182, 0.48);
-}
-
-.case-easter::after {
-  content: "";
-  position: absolute;
-  inset: 10%;
-  border: 2px solid rgba(253, 224, 71, 0.55);
-  border-radius: 12px;
-  box-shadow:
-    0 0 34px rgba(244, 114, 182, 0.38),
-    0 0 24px rgba(253, 224, 71, 0.2),
-    inset 0 0 22px rgba(167, 139, 250, 0.12);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.case-easter .case-chest-band {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(253, 224, 71, 0.65),
-    rgba(244, 114, 182, 0.92),
-    rgba(253, 224, 71, 0.65),
-    transparent
-  );
-  box-shadow: 0 0 16px rgba(244, 114, 182, 0.42);
-}
 
 .case-common {
   background: linear-gradient(168deg, #a8a29e 0%, #57534e 28%, #292524 62%, #0c0a09 100%);
@@ -1647,197 +1539,7 @@ body.season-spring .bg-aurora {
   color: var(--gem);
 }
 
-/* ——— Пасха ——— */
-.screen-easter {
-  max-width: 900px;
-}
-
-.easter-intro {
-  color: var(--text-muted);
-  line-height: 1.55;
-  margin: 0 0 1.75rem;
-  font-size: 0.95rem;
-  max-width: 52rem;
-}
-
-.easter-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
-}
-
-.easter-card {
-  background: var(--bg-panel);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  border: 1px solid rgba(251, 207, 232, 0.25);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-lg);
-}
-
-.easter-chest-card {
-  position: relative;
-  padding-top: 2.35rem;
-  border: 1px solid rgba(251, 207, 232, 0.28);
-  background:
-    linear-gradient(155deg, rgba(30, 27, 75, 0.92) 0%, rgba(67, 20, 102, 0.55) 45%, rgba(15, 23, 42, 0.88) 100%);
-  box-shadow:
-    0 0 0 1px rgba(253, 224, 71, 0.12) inset,
-    0 0 0 1px rgba(167, 139, 250, 0.2),
-    0 20px 56px rgba(0, 0, 0, 0.45),
-    0 0 80px rgba(236, 72, 153, 0.16),
-    0 0 120px rgba(167, 139, 250, 0.1);
-  overflow: visible;
-}
-
-.easter-chest-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.easter-chest-ribbon {
-  position: absolute;
-  top: 0.85rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #431407;
-  padding: 0.35rem 1.25rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #fde68a, #fbcfe8, #fde68a);
-  box-shadow:
-    0 2px 0 rgba(180, 83, 9, 0.35),
-    0 6px 20px rgba(244, 114, 182, 0.35);
-  white-space: nowrap;
-}
-
-.easter-chest-card .case-visual-wrap {
-  background:
-    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(236, 72, 153, 0.14), transparent 55%),
-    radial-gradient(ellipse 75% 55% at 50% 0%, rgba(253, 224, 71, 0.1), transparent 52%);
-}
-
-.easter-chest-title {
-  font-size: 1.38rem;
-  letter-spacing: 0.04em;
-  background: linear-gradient(90deg, #fce7f3, #fde68a, #e9d5ff, #fce7f3);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 12px rgba(244, 114, 182, 0.25));
-  animation: easterTitleShimmer 8s linear infinite;
-}
-
-@keyframes easterTitleShimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .easter-chest-card .case-visual,
-  .easter-chest-card .case-visual-glow {
-    animation: none !important;
-  }
-
-  .easter-chest-card .case-visual {
-    transform: none;
-  }
-
-  .easter-chest-title {
-    animation: none !important;
-    background: linear-gradient(90deg, #fce7f3, #fde68a, #e9d5ff);
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-}
-
-.easter-chest-card .easter-price {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  padding: 0.5rem 1.1rem;
-  margin-bottom: 1.15rem;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.55));
-  border: 1px solid rgba(251, 191, 36, 0.32);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.easter-card h3 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display);
-}
-
-.easter-desc {
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
-  margin: 0 0 1rem;
-  min-height: 3.5rem;
-}
-
-.easter-price {
-  margin: 0 0 1rem;
-  font-size: 1.05rem;
-  color: var(--gold);
-}
-
-.easter-trial-badge {
-  width: 100%;
-  text-align: center;
-  margin: 0 0 0.5rem;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #fce7f3;
-  background: linear-gradient(90deg, rgba(190, 24, 93, 0.45), rgba(91, 33, 182, 0.45));
-  border-radius: 999px;
-  border: 1px solid rgba(251, 207, 232, 0.35);
-}
-
-.screen-game--easter-trial .canvas-frame {
-  background-color: rgb(20, 28, 48);
-  background-image:
-    linear-gradient(145deg, rgba(244, 114, 182, 0.42), rgba(167, 139, 250, 0.32), rgba(251, 191, 36, 0.18)),
-    linear-gradient(45deg, rgba(30, 42, 68, 0.97) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(30, 42, 68, 0.97) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(24, 34, 56, 0.98) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(16, 24, 42, 0.99) 75%);
-  background-size:
-    auto,
-    40px 40px,
-    40px 40px,
-    40px 40px,
-    40px 40px;
-  background-position:
-    0 0,
-    0 0,
-    0 20px,
-    20px -20px,
-    -20px 0px;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 80px rgba(244, 114, 182, 0.15);
-}
-
-.case-overlay.case-overlay-easter .case-face-front {
-  background: linear-gradient(145deg, #f9a8d4, #7c3aed);
-  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.45);
-}
-
-.case-overlay.case-overlay-easter .case-face-top {
-  background: linear-gradient(180deg, #fbcfe8, #86198f);
-}
+/* (Пасхальные стили удалены) */
 
 /* ——— Коллекция ——— */
 .collection-tabs {
@@ -2056,11 +1758,6 @@ body.season-spring .bg-aurora {
   color: #1c1917;
 }
 
-.rarity-easter {
-  background: linear-gradient(135deg, rgba(253, 224, 71, 0.5), rgba(244, 114, 182, 0.55));
-  color: #431407;
-}
-
 /* ——— Игра ——— */
 .screen-game {
   max-width: 1280px;
@@ -2086,6 +1783,73 @@ body.season-spring .bg-aurora {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+
+.hud-mods {
+  position: fixed;
+  left: 50%;
+  top: 84px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: center;
+  width: min(860px, calc(100vw - 2rem));
+  pointer-events: auto;
+  z-index: 80;
+}
+
+.hud-mods.hidden {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .hud-mods {
+    top: 126px;
+  }
+}
+
+.mod-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240, 253, 250, 0.92);
+  background: linear-gradient(125deg, rgba(56, 189, 248, 0.18), rgba(129, 140, 248, 0.14), rgba(94, 234, 212, 0.12));
+  border: 1px solid rgba(165, 243, 252, 0.25);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  max-width: 100%;
+  cursor: help;
+}
+
+.mod-pill.mod-pill--empty {
+  opacity: 0.65;
+  background: rgba(2, 6, 23, 0.25);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: rgba(203, 213, 225, 0.92);
+  cursor: default;
+}
+
+.mod-pill .mod-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(94, 234, 212, 0.75), rgba(99, 102, 241, 0.55));
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+  flex: 0 0 auto;
+}
+
+.mod-pill .mod-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 16rem;
 }
 
 /* Игровой HUD: та же палитра, что у заголовка меню */
@@ -2744,11 +2508,6 @@ body.season-spring .bg-aurora {
 
 .hero-card.common {
   border-color: var(--rarity-common);
-}
-
-.hero-card.easter {
-  border-color: var(--rarity-easter);
-  box-shadow: 0 0 48px var(--rarity-easter-glow), 0 0 24px rgba(253, 224, 71, 0.25);
 }
 
 .hero-card-glow {

@@ -20,13 +20,6 @@ var GAME_CONFIG = {
   /** Награда за полную победу (дополнительно к накопленному в бою) */
   GEMS_VICTORY_BONUS: 28,
 
-  EASTER_CHEST_GOLD: 195,
-  EASTER_TRIAL_HP_MUL: 1.38,
-  EASTER_TRIAL_SPEED_MUL: 1.09,
-  EASTER_TRIAL_SPAWN_MUL: 0.86,
-  EASTER_VICTORY_EXTRA_GEMS: 22,
-  EASTER_VICTORY_EXTRA_GOLD: 140,
-
   /** Множители сложности (применяются к HP и скорости волн; бонусы — к старту) */
   DIFFICULTY: {
     easy: { hpMul: 0.78, speedMul: 0.88, livesBonus: 4, goldBonus: 55, label: "Лёгкая" },

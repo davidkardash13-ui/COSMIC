@@ -407,6 +407,23 @@ var TDGame = (function () {
         mechanicDesc: t.mechanicDesc || "",
       });
     }
+    // Экономическая башня: не атакует, но приносит золото за пройденные волны.
+    out.push({
+      id: "farm",
+      heroId: null,
+      alwaysUnlocked: true,
+      name: "Ферма",
+      cost: 120,
+      range: 0,
+      damage: 0,
+      cooldown: 999999,
+      color: "#22c55e",
+      splash: 0,
+      slow: 0,
+      mechanic: "farm",
+      mechanicDesc: "Не атакует. Пассивный доход за каждую пройденную волну.",
+      incomePerWave: 18,
+    });
     return out;
   }
 
@@ -584,6 +601,39 @@ var TDGame = (function () {
     var x = tw.x,
       y = tw.y,
       lvl = tw.upgradeLevel | 0;
+    if (tw.def && tw.def.mechanic === "farm") {
+      var c0 = "#22c55e";
+      var c1 = "#14532d";
+      var pulse = 0.9 + 0.1 * Math.sin((animTime || 0) * 0.0028);
+      var R = (14 + lvl * 2.1) * pulse;
+      ctx.save();
+      ctx.shadowColor = "rgba(34,197,94,0.55)";
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.moveTo(x, y - R);
+      ctx.lineTo(x + R, y);
+      ctx.lineTo(x, y + R);
+      ctx.lineTo(x - R, y);
+      ctx.closePath();
+      var g0 = ctx.createLinearGradient(x - R, y - R, x + R, y + R);
+      g0.addColorStop(0, c0);
+      g0.addColorStop(1, c1);
+      ctx.fillStyle = g0;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + R * 0.45, y - R * 0.35, 4.6 + lvl * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(251,191,36,0.85)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
     var c = lvl > 0 ? lightenHex(tw.def.color, 0.11 * lvl) : tw.def.color;
     var pulse = 0.94 + 0.06 * Math.sin((animTime || 0) * 0.0033);
     var sides = lvl >= 2 ? 8 : 6;
@@ -848,7 +898,6 @@ var TDGame = (function () {
     if (this.ctx.imageSmoothingEnabled !== undefined) this.ctx.imageSmoothingEnabled = true;
     if (this.ctx.imageSmoothingQuality !== undefined) this.ctx.imageSmoothingQuality = "high";
     this.bonuses = bonuses || { damageMul: 1, rangeMul: 1, slowMul: 1, goldMul: 1, rateMul: 1 };
-    this.easterHard = !!opts.easterHard;
     var diffKey = opts.difficulty || "normal";
     var D =
       typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.DIFFICULTY && GAME_CONFIG.DIFFICULTY[diffKey]
@@ -898,7 +947,75 @@ var TDGame = (function () {
     this._staticLayer = null;
     this._staticLayerCtx = null;
     this._buildStaticLayer();
+    this.modifiers = this._rollRunModifiers();
   }
+
+  Game.prototype._rollRunModifiers = function () {
+    var list = [
+      {
+        id: "time_warp",
+        name: "Искажение времени",
+        desc: "Башни атакуют быстрее, но враги тоже ускорены.",
+        towerRateMul: 1.12,
+        enemySpeedMul: 1.1,
+      },
+      {
+        id: "gold_vein",
+        name: "Золотая жила",
+        desc: "Больше наград за волну, но враги прочнее.",
+        rewardMul: 1.55,
+        enemyHpMul: 1.14,
+      },
+      {
+        id: "ether_fog",
+        name: "Эфирный туман",
+        desc: "Враги сильнее сопротивляются замедлению.",
+        slowResistAdd: 0.18,
+      },
+      {
+        id: "thin_veil",
+        name: "Тонкая завеса",
+        desc: "Чуть меньше HP врагов, но больше брони.",
+        enemyHpMul: 0.92,
+        armorAdd: 0.06,
+      },
+      {
+        id: "overcharge",
+        name: "Перегрузка",
+        desc: "Урон башен выше, но перезарядка чуть дольше.",
+        towerDamageMul: 1.12,
+        towerCooldownMul: 1.08,
+      },
+    ];
+
+    var mods = [];
+    // Редко: 12% шанс на 1 модификатор, 2% шанс на 2 модификатора.
+    var r = Math.random();
+    var count = r < 0.02 ? 2 : r < 0.12 ? 1 : 0;
+    while (mods.length < count && list.length) {
+      var i = (Math.random() * list.length) | 0;
+      mods.push(list.splice(i, 1)[0]);
+    }
+    return mods;
+  };
+
+  Game.prototype._modifierMul = function (key, def) {
+    var m = def == null ? 1 : def;
+    var mods = this.modifiers || [];
+    for (var i = 0; i < mods.length; i++) {
+      if (typeof mods[i][key] === "number") m *= mods[i][key];
+    }
+    return m;
+  };
+
+  Game.prototype._modifierAdd = function (key, def) {
+    var v = def == null ? 0 : def;
+    var mods = this.modifiers || [];
+    for (var i = 0; i < mods.length; i++) {
+      if (typeof mods[i][key] === "number") v += mods[i][key];
+    }
+    return v;
+  };
 
   Game.prototype._buildStaticLayer = function () {
     try {
@@ -1025,16 +1142,20 @@ var TDGame = (function () {
   };
 
   Game.prototype.isTowerUnlocked = function (type) {
+    if (type && type.alwaysUnlocked) return true;
     var hid = type.heroId != null ? type.heroId : type.id;
     return !!this.ownedHeroIds[hid];
   };
 
   Game.prototype.effectiveStats = function (base) {
     var b = this.bonuses;
+    var cdMul = this._modifierMul("towerCooldownMul", 1);
+    var dmgMul = this._modifierMul("towerDamageMul", 1);
+    var rateMul = this._modifierMul("towerRateMul", 1);
     return {
       range: base.range * b.rangeMul,
-      damage: base.damage * b.damageMul,
-      cooldown: Math.max(12, (base.cooldown / b.rateMul) | 0),
+      damage: base.damage * b.damageMul * dmgMul,
+      cooldown: Math.max(12, (base.cooldown * cdMul / (b.rateMul * rateMul)) | 0),
       slow: base.slow ? base.slow * b.slowMul : 0,
       splash: base.splash,
     };
@@ -1109,18 +1230,12 @@ var TDGame = (function () {
 
     var hpBase = (38 + w * 28 + w * w * 3.65 + ((w * w * w) / 34)) | 0;
     if (w > 18) hpBase = (hpBase * (1 + (w - 18) * 0.028)) | 0;
-    if (this.easterHard) {
-      var hm = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_TRIAL_HP_MUL ? GAME_CONFIG.EASTER_TRIAL_HP_MUL : 1.38;
-      hpBase = (hpBase * hm) | 0;
-    }
     hpBase = (hpBase * this._diffHpMul) | 0;
+    hpBase = (hpBase * this._modifierMul("enemyHpMul", 1)) | 0;
     var speed = Math.min(2.62, 0.86 + w * 0.044);
-    if (this.easterHard) {
-      var sm = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_TRIAL_SPEED_MUL ? GAME_CONFIG.EASTER_TRIAL_SPEED_MUL : 1.09;
-      speed = Math.min(2.85, speed * sm);
-    }
     speed = Math.min(2.95, speed * this._diffSpeedMul);
-    var reward = (4 + (w * 0.52) | 0) * this.bonuses.goldMul;
+    speed = speed * this._modifierMul("enemySpeedMul", 1);
+    var reward = (4 + (w * 0.52) | 0) * this.bonuses.goldMul * this._modifierMul("rewardMul", 1);
 
     var armorWave = 0;
     if (w > 2) armorWave = 0.035;
@@ -1131,6 +1246,7 @@ var TDGame = (function () {
     if (w > 20) armorWave = 0.29;
     if (w > 25) armorWave = 0.33;
 
+    armorWave = Math.min(0.56, armorWave + this._modifierAdd("armorAdd", 0));
     this._waveSpec = { hp: hpBase, speed: speed, reward: reward, armor: armorWave };
     this._notifyUi();
     if (typeof SFX !== "undefined" && SFX.waveStart) SFX.waveStart();
@@ -1291,7 +1407,7 @@ var TDGame = (function () {
       hitFlash: 0,
       color: K.color,
       kind: kindId,
-      slowResist: K.slowResist,
+      slowResist: Math.min(0.85, Math.max(0, (K.slowResist || 0) + this._modifierAdd("slowResistAdd", 0))),
       regen: typeof K.regen === "number" ? K.regen : 0,
       fromCave: !!useCave,
       bossVariant: bossVariant,
@@ -1403,10 +1519,6 @@ var TDGame = (function () {
       if (this.spawnTimer <= 0) {
         this._spawnOne();
         var st = 165 + Math.random() * 175;
-        if (this.easterHard) {
-          var pm = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_TRIAL_SPAWN_MUL ? GAME_CONFIG.EASTER_TRIAL_SPAWN_MUL : 0.86;
-          st *= pm;
-        }
         this.spawnTimer = st;
       }
     }
@@ -1417,6 +1529,19 @@ var TDGame = (function () {
       var wr = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.WAVE_REWARD ? GAME_CONFIG.WAVE_REWARD : 0;
       this.gold += wr;
       this.sessionGoldEarned += wr;
+      // Пассивный доход ферм за каждую пройденную волну
+      var farmGold = 0;
+      for (var fi = 0; fi < this.towers.length; fi++) {
+        var ft = this.towers[fi];
+        if (!ft || !ft.def || ft.def.mechanic !== "farm") continue;
+        var baseInc = typeof ft.def.incomePerWave === "number" ? ft.def.incomePerWave : 0;
+        var lvl = ft.upgradeLevel | 0;
+        farmGold += Math.floor(baseInc * (1 + 0.35 * lvl));
+      }
+      if (farmGold > 0) {
+        this.gold += farmGold;
+        this.sessionGoldEarned += farmGold;
+      }
       var wi = this.waveIndex;
       if (GAME_CONFIG.GEMS_WAVE_CLEAR) this.runGems += GAME_CONFIG.GEMS_WAVE_CLEAR;
       if (wi % 5 === 0 && GAME_CONFIG.GEMS_EVERY_5_WAVES) this.runGems += GAME_CONFIG.GEMS_EVERY_5_WAVES;
@@ -1673,6 +1798,7 @@ var TDGame = (function () {
     for (var ti = 0; ti < this.towers.length; ti++) {
       var tw = this.towers[ti];
       var def = tw.def;
+      if (def && def.mechanic === "farm") continue;
       var st = this.effectiveStatsForTower(tw);
       tw.cooldownLeft = tw.cooldownLeft || 0;
       tw.cooldownLeft -= dt;

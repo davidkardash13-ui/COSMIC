@@ -36,16 +36,6 @@ var Cases = (function () {
     return "common";
   }
 
-  /** Только герои с seasonalEaster, равные шансы */
-  function pickEasterHero() {
-    var list = [];
-    for (var i = 0; i < HEROES.length; i++) {
-      if (HEROES[i].seasonalEaster) list.push(HEROES[i]);
-    }
-    if (!list.length) return null;
-    return list[(Math.random() * list.length) | 0];
-  }
-
   function heroesOfRarity(r) {
     var out = [];
     for (var i = 0; i < HEROES.length; i++) {
@@ -67,28 +57,15 @@ var Cases = (function () {
     var rarity;
     var hero;
 
-    if (caseType === "easter") {
-      hero = pickEasterHero();
-      rarity = hero ? hero.rarity : "easter";
-    } else {
-      rarity = rollRarity(caseType);
-      if (caseType === "legendary" && rarity === "common") rarity = "rare";
-      hero = randomHeroOfRarity(rarity);
-      if (!hero) {
-        rarity = "common";
-        hero = randomHeroOfRarity("common");
-      }
+    rarity = rollRarity(caseType);
+    if (caseType === "legendary" && rarity === "common") rarity = "rare";
+    hero = randomHeroOfRarity(rarity);
+    if (!hero) {
+      rarity = "common";
+      hero = randomHeroOfRarity("common");
     }
 
     if (!hero) {
-      if (caseType === "easter") {
-        return {
-          hero: null,
-          duplicate: false,
-          compensation: 0,
-          compensationType: "gold",
-        };
-      }
       rarity = "common";
       hero = randomHeroOfRarity("common");
     }
@@ -113,9 +90,6 @@ var Cases = (function () {
       } else if (hero.rarity === "epic") {
         compensation = 35;
         compensationType = "gems";
-      } else if (hero.rarity === "easter") {
-        compensation = 30;
-        compensationType = "gems";
       } else if (hero.rarity === "rare") {
         compensation = 60;
         compensationType = "gold";
@@ -137,10 +111,6 @@ var Cases = (function () {
     if (caseType === "common") return state.gold >= 150;
     if (caseType === "rare") return state.gems >= 40;
     if (caseType === "legendary") return state.gems >= 120;
-    if (caseType === "easter") {
-      var c = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_CHEST_GOLD ? GAME_CONFIG.EASTER_CHEST_GOLD : 195;
-      return state.gold >= c;
-    }
     return false;
   }
 
@@ -155,10 +125,6 @@ var Cases = (function () {
     if (caseType === "common") next.gold -= 150;
     else if (caseType === "rare") next.gems -= 40;
     else if (caseType === "legendary") next.gems -= 120;
-    else if (caseType === "easter") {
-      var cost = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_CHEST_GOLD ? GAME_CONFIG.EASTER_CHEST_GOLD : 195;
-      next.gold -= cost;
-    }
     return next;
   }
 

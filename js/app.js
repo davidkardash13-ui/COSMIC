@@ -3,13 +3,9 @@
   var gameInstance = null;
   var pendingGameOpts = null;
   var pendingDifficultyCancelScreen = null;
-  // Пасхальный эвент оставлен в коде, но скрыт от игрока (можно вернуть позже).
-  var EASTER_EVENT_ENABLED = false;
 
   var DIFF_MODAL_DESC_DEFAULT =
     "Выберите сложность перед началом игры. Можно изменить при каждом запуске.";
-  var DIFF_MODAL_DESC_EASTER =
-    "Выберите сложность весеннего испытания. Волны сильнее обычного режима.";
 
   function $(id) {
     return document.getElementById(id);
@@ -69,7 +65,6 @@
     if (r === "rare") return "Редкий";
     if (r === "epic") return "Эпический";
     if (r === "legendary") return "Легендарный";
-    if (r === "easter") return "Пасхальный";
     return r;
   }
 
@@ -185,7 +180,6 @@
 
     function close() {
       overlay.classList.add("hidden");
-      overlay.classList.remove("case-overlay-easter");
       overlay.setAttribute("aria-hidden", "true");
       wrap.classList.add("hidden");
       btn.classList.add("hidden");
@@ -197,7 +191,6 @@
 
     window.__openCaseAnimation = function (result, onDone, theme) {
       if (!result || !result.hero) return;
-      overlay.classList.toggle("case-overlay-easter", theme === "easter");
       overlay.classList.remove("hidden");
       overlay.setAttribute("aria-hidden", "false");
       wrap.classList.add("hidden");
@@ -213,8 +206,6 @@
           ? "legendary"
           : hero.rarity === "epic"
             ? "epic"
-            : hero.rarity === "easter"
-              ? "easter"
               : hero.rarity === "rare"
                 ? "rare"
                 : hero.rarity === "common"
@@ -266,90 +257,7 @@
           else state.gold += result.compensation;
         }
         persist();
-        window.__openCaseAnimation(result, null, caseType === "easter" ? "easter" : null);
-      });
-    }
-  }
-
-  function refreshSeasonalUi() {
-    var spring = EASTER_EVENT_ENABLED && typeof SeasonEvents !== "undefined" && SeasonEvents.isSpringSeason();
-    var btn = $("btn-menu-easter");
-    if (btn) {
-      if (spring) btn.classList.remove("hidden");
-      else btn.classList.add("hidden");
-    }
-    document.body.classList.toggle("season-spring", !!spring);
-    var intro = $("easter-intro-text");
-    if (intro && typeof SeasonEvents !== "undefined") intro.textContent = SeasonEvents.getEventDescription();
-    var costEl = $("easter-chest-cost");
-    if (costEl && typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.EASTER_CHEST_GOLD)
-      costEl.textContent = String(GAME_CONFIG.EASTER_CHEST_GOLD);
-    if (!spring) {
-      var es = $("screen-easter");
-      if (es && es.classList.contains("screen-active")) showScreen("screen-menu");
-    }
-  }
-
-  function bindEasterNav() {
-    var menuE = $("btn-menu-easter");
-    if (menuE) {
-      menuE.addEventListener("click", function () {
-        if (!EASTER_EVENT_ENABLED || typeof SeasonEvents === "undefined" || !SeasonEvents.isSpringSeason()) {
-          showScreen("screen-menu");
-          return;
-        }
-        showScreen("screen-easter");
-      });
-    }
-    var back = $("btn-easter-back");
-    if (back) back.addEventListener("click", function () {
-      showScreen("screen-menu");
-    });
-    var chestBtn = $("btn-easter-chest-open");
-    if (chestBtn) {
-      chestBtn.addEventListener("click", function () {
-        if (!EASTER_EVENT_ENABLED || typeof SeasonEvents === "undefined" || !SeasonEvents.isSpringSeason()) {
-          alert("Пасхальное событие доступно только весной (март–май).");
-          showScreen("screen-menu");
-          return;
-        }
-        if (!Cases.canAfford(state, "easter")) {
-          alert("Недостаточно золота для пасхального ящика.");
-          return;
-        }
-        var ownedSet = {};
-        for (var j = 0; j < state.ownedHeroes.length; j++) ownedSet[state.ownedHeroes[j]] = true;
-        var result = Cases.open("easter", ownedSet);
-        if (!result.hero) {
-          alert("Пасхальные герои недоступны. Обновите игру или сообщите об ошибке.");
-          return;
-        }
-        var next = Cases.pay(state, "easter");
-        state = next;
-        if (!result.duplicate) {
-          state.ownedHeroes.push(result.hero.id);
-        } else {
-          if (result.compensationType === "gems") state.gems += result.compensation;
-          else state.gold += result.compensation;
-        }
-        if (!result.duplicate) state.gems += 3;
-        persist();
-        window.__openCaseAnimation(result, null, "easter");
-      });
-    }
-    var trialBtn = $("btn-easter-trial");
-    if (trialBtn) {
-      trialBtn.addEventListener("click", function () {
-        if (!EASTER_EVENT_ENABLED || typeof SeasonEvents === "undefined" || !SeasonEvents.isSpringSeason()) {
-          alert("Весеннее испытание доступно только весной (март–май).");
-          showScreen("screen-menu");
-          return;
-        }
-        if (!state.ownedHeroes || state.ownedHeroes.length === 0) {
-          alert("Сначала откройте кейс и получите хотя бы одного героя — башни доступны только через коллекцию.");
-          return;
-        }
-        openDifficultyPicker({ easterHard: true, cancelScreen: "screen-easter" });
+        window.__openCaseAnimation(result, null, null);
       });
     }
   }
@@ -434,6 +342,39 @@
       autoBtn.classList.toggle("is-on", on);
       autoBtn.setAttribute("aria-pressed", on ? "true" : "false");
     }
+
+    // Модификаторы забега (редкие эффекты)
+    var modsRoot = $("hud-mods");
+    if (modsRoot) {
+      var mods = game && Array.isArray(game.modifiers) ? game.modifiers : [];
+      if (!mods.length) {
+        modsRoot.classList.remove("hidden");
+        modsRoot.innerHTML =
+          '<span class="mod-pill mod-pill--empty" title="Иногда в начале забега включаются редкие эффекты." aria-label="Модификаторы: нет">' +
+          '<span class="mod-dot" aria-hidden="true"></span>' +
+          '<span class="mod-name">Модификаторов нет</span>' +
+          "</span>";
+      } else {
+        modsRoot.classList.remove("hidden");
+        var html = "";
+        for (var mi = 0; mi < mods.length; mi++) {
+          var m = mods[mi];
+          var name = m && m.name ? String(m.name) : "Модификатор";
+          var desc = m && m.desc ? String(m.desc) : "";
+          html +=
+            '<span class="mod-pill" title="' +
+            desc.replace(/"/g, "&quot;") +
+            '" aria-label="' +
+            name.replace(/"/g, "&quot;") +
+            '">' +
+            '<span class="mod-dot" aria-hidden="true"></span>' +
+            '<span class="mod-name">' +
+            name +
+            "</span></span>";
+        }
+        modsRoot.innerHTML = html;
+      }
+    }
   }
 
   function bankRunGemsFromGame() {
@@ -461,15 +402,8 @@
     var overlay = $("game-overlay");
     if (overlay) overlay.classList.add("hidden");
 
-    var badge = $("easter-trial-badge");
     var sg = $("screen-game");
-    if (opts.easterHard) {
-      if (badge) badge.classList.remove("hidden");
-      if (sg) sg.classList.add("screen-game--easter-trial");
-    } else {
-      if (badge) badge.classList.add("hidden");
-      if (sg) sg.classList.remove("screen-game--easter-trial");
-    }
+    if (sg) sg.classList.remove("screen-game--easter-trial");
 
     var bonuses = aggregateBonuses(state.ownedHeroes);
     if (gameInstance) {
@@ -478,7 +412,6 @@
     }
 
     gameInstance = new TDGame.Game(canvas, bonuses, {
-      easterHard: !!opts.easterHard,
       difficulty: opts.difficulty || state.difficulty || "normal",
     });
     gameInstance.setOwnedHeroes(state.ownedHeroes);
@@ -492,15 +425,10 @@
       var text = $("overlay-text");
       bankRunGemsFromGame();
       bankSessionGoldFromGame();
-      var wasEasterTrial = !!gameInstance.easterHard;
       if (res.win) {
         if (typeof SFX !== "undefined" && SFX.victory) SFX.victory();
         state.gold += 520;
         state.gems += typeof GAME_CONFIG.GEMS_VICTORY_BONUS === "number" ? GAME_CONFIG.GEMS_VICTORY_BONUS : 28;
-        if (wasEasterTrial) {
-          state.gems += typeof GAME_CONFIG.EASTER_VICTORY_EXTRA_GEMS === "number" ? GAME_CONFIG.EASTER_VICTORY_EXTRA_GEMS : 22;
-          state.gold += typeof GAME_CONFIG.EASTER_VICTORY_EXTRA_GOLD === "number" ? GAME_CONFIG.EASTER_VICTORY_EXTRA_GOLD : 140;
-        }
         state.gamesWon = (state.gamesWon || 0) + 1;
         if (gameInstance.waveIndex > (state.highestWave || 0)) state.highestWave = gameInstance.waveIndex;
         persist();
@@ -508,9 +436,6 @@
         if (text) {
           var baseMsg =
             "Все 30 волон пройдены. Золото и кристаллы зачислены. На волнах 10, 20 и 30 — по два босса.";
-          if (wasEasterTrial)
-            baseMsg +=
-              " Бонус весеннего испытания: дополнительные кристаллы и золото.";
           text.textContent = baseMsg;
         }
       } else {
@@ -578,13 +503,12 @@
   function openDifficultyPicker(opts) {
     opts = opts || {};
     pendingGameOpts = {};
-    if (opts.easterHard) pendingGameOpts.easterHard = true;
     pendingDifficultyCancelScreen = opts.cancelScreen || null;
 
     var desc = $("difficulty-modal-desc");
-    if (desc) desc.textContent = opts.easterHard ? DIFF_MODAL_DESC_EASTER : DIFF_MODAL_DESC_DEFAULT;
+    if (desc) desc.textContent = DIFF_MODAL_DESC_DEFAULT;
     var startBtn = $("btn-diff-start");
-    if (startBtn) startBtn.textContent = opts.easterHard ? "Начать испытание" : "Начать игру";
+    if (startBtn) startBtn.textContent = "Начать игру";
 
     var ov = $("difficulty-overlay");
     if (ov) {
@@ -886,9 +810,6 @@
   bindPromoCodes();
   bindCollectionTabs();
   bindCases();
-  bindEasterNav();
-  refreshSeasonalUi();
-  setInterval(refreshSeasonalUi, 60000);
   refreshMenuStats();
   renderCollection();
   initAppLoader();

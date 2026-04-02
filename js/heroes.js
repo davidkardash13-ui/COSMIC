@@ -484,90 +484,6 @@ var HEROES = [
     },
   },
   {
-    id: "lumi_hare",
-    name: "Луми-Зайка",
-    role: "Скорострельность +4% (пасхальный герой)",
-    rarity: "easter",
-    seasonalEaster: true,
-    gradient: "linear-gradient(145deg, #fce7f3, #db2777)",
-    bonus: { rateMul: 1.04 },
-    tower: {
-      name: "Карамельный луч",
-      mechanic: "ricochet",
-      mechanicDesc: "Рикошет в другую цель",
-      cost: 84,
-      range: 112,
-      damage: 12,
-      cooldown: 32,
-      color: "#f472b6",
-      splash: 0,
-      slow: 0,
-    },
-  },
-  {
-    id: "iris_egg",
-    name: "Ирис",
-    role: "Урон +5%, золото +4% (пасхальный герой)",
-    rarity: "easter",
-    seasonalEaster: true,
-    gradient: "linear-gradient(145deg, #ddd6fe, #5b21b6)",
-    bonus: { damageMul: 1.05, goldMul: 1.04 },
-    tower: {
-      name: "Яичный заряд",
-      mechanic: "twin",
-      mechanicDesc: "Два снаряда по разным целям",
-      cost: 130,
-      range: 106,
-      damage: 24,
-      cooldown: 58,
-      color: "#c4b5fd",
-      splash: 40,
-      slow: 0,
-    },
-  },
-  {
-    id: "flora_spring",
-    name: "Флора",
-    role: "Замедление +5% (пасхальный герой)",
-    rarity: "easter",
-    seasonalEaster: true,
-    gradient: "linear-gradient(145deg, #86efac, #166534)",
-    bonus: { slowMul: 1.05 },
-    tower: {
-      name: "Цветочный шторм",
-      mechanic: "bloom",
-      mechanicDesc: "Взрыв оставляет зону замедления",
-      cost: 185,
-      range: 114,
-      damage: 18,
-      cooldown: 52,
-      color: "#4ade80",
-      splash: 38,
-      slow: 0.22,
-    },
-  },
-  {
-    id: "aurora_spring",
-    name: "Аврора Весны",
-    role: "Урон +7%, дальность +3% (пасхальный герой)",
-    rarity: "easter",
-    seasonalEaster: true,
-    gradient: "linear-gradient(145deg, #fef08a, #f472b6 50%, #a78bfa)",
-    bonus: { damageMul: 1.07, rangeMul: 1.03 },
-    tower: {
-      name: "Сияние рассвета",
-      mechanic: "ray",
-      mechanicDesc: "Луч прошивает всех на линии",
-      cost: 255,
-      range: 142,
-      damage: 40,
-      cooldown: 50,
-      color: "#fde047",
-      splash: 0,
-      slow: 0,
-    },
-  },
-  {
     id: "nyx",
     name: "Никс",
     role: "Скорострельность +5%",
@@ -648,14 +564,6 @@ var HEROES = [
     },
   },
 ];
-
-function heroesEasterSeasonalOfRarity(r) {
-  var out = [];
-  for (var i = 0; i < HEROES.length; i++) {
-    if (HEROES[i].rarity === r && HEROES[i].seasonalEaster) out.push(HEROES[i]);
-  }
-  return out;
-}
 
 function getHeroById(id) {
   for (var i = 0; i < HEROES.length; i++) {

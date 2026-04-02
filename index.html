@@ -54,7 +54,6 @@
         <button type="button" class="btn btn-secondary" id="btn-collection">Коллекция</button>
         <button type="button" class="btn btn-secondary" id="btn-promocodes">Промокоды</button>
         <button type="button" class="btn btn-secondary" id="btn-reset-progress">Сбросить прогресс</button>
-        <button type="button" class="btn btn-easter-menu hidden" id="btn-menu-easter">Пасхальное событие</button>
       </nav>
       <div class="menu-stats">
         <span class="stat-pill"><span class="stat-label">Золото</span> <strong id="menu-gold">0</strong></span>
@@ -155,37 +154,6 @@
       </div>
     </section>
 
-    <!-- Пасхальное событие (видно только весной, март–май) -->
-    <section id="screen-easter" class="screen screen-easter">
-      <header class="screen-header">
-        <button type="button" class="btn btn-ghost btn-compact" id="btn-easter-back">← Назад</button>
-        <h2>Пасхальное событие</h2>
-      </header>
-      <p class="easter-intro" id="easter-intro-text"></p>
-      <div class="easter-layout">
-        <article class="easter-card easter-chest-card">
-          <div class="easter-chest-ribbon" aria-hidden="true">Весенний сезон</div>
-          <div class="case-visual-wrap">
-            <div class="case-visual-glow case-visual-glow--easter" aria-hidden="true"></div>
-            <div class="case-visual case-easter">
-              <span class="case-chest-lid" aria-hidden="true"></span>
-              <span class="case-chest-band" aria-hidden="true"></span>
-              <span class="case-chest-lock case-chest-lock--easter" aria-hidden="true"></span>
-            </div>
-          </div>
-          <h3 class="easter-chest-title">Пасхальный ящик</h3>
-          <p class="easter-desc">Выпадают только пасхальные герои (редкость «Пасхальный»): Луми-Зайка, Ирис, Флора и Аврора Весны — без обычного пула.</p>
-          <p class="easter-price">Цена: <span class="currency-gold" id="easter-chest-cost">195</span> золота</p>
-          <button type="button" class="btn btn-chest btn-chest-easter btn-block" id="btn-easter-chest-open">Открыть пасхальный ящик</button>
-        </article>
-        <article class="easter-card easter-trial-card">
-          <h3>Весеннее испытание</h3>
-          <p class="easter-desc">Те же 30 волн, но враги крепче и появляются чаще. За победу — дополнительное золото и кристаллы.</p>
-          <button type="button" class="btn btn-chest btn-chest-trial btn-block" id="btn-easter-trial">Начать испытание</button>
-        </article>
-      </div>
-    </section>
-
     <!-- Коллекция -->
     <section id="screen-collection" class="screen">
       <header class="screen-header">
@@ -217,12 +185,12 @@
           <span class="hud-item">Золото: <strong id="hud-gold">0</strong></span>
           <span class="hud-item hud-gems">Кристаллы: <strong id="hud-gems">0</strong></span>
         </div>
+        <div class="hud-mods hidden" id="hud-mods" aria-label="Модификаторы забега"></div>
         <div class="hud-wave-actions">
           <button type="button" class="btn btn-game btn-game-wave btn-compact" id="btn-wave" title="Следующая волна">След. волна</button>
           <button type="button" class="btn btn-game btn-game-auto btn-compact btn-auto-wave" id="btn-auto-wave" title="Автоматически запускать следующую волну после очистки" aria-pressed="false">Авто след. волна</button>
         </div>
       </div>
-      <p id="easter-trial-badge" class="easter-trial-badge hidden" role="status">Весеннее испытание: усиленные волны</p>
       <div class="game-wrap">
         <div class="canvas-frame">
           <div class="canvas-frame-glow" aria-hidden="true"></div>
@@ -289,7 +257,6 @@
   <script src="js/config.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/heroes.js"></script>
-  <script src="js/season.js"></script>
   <script src="js/cases.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/td.js"></script>
