@@ -319,7 +319,7 @@
     }
     if (hint) {
       hint.textContent = any
-        ? "Пустая клетка — построить выбранную башню. Клик по своей башне — улучшение (урон, дальность, вид)."
+        ? "Пустая клетка — построить выбранную башню. ЛКМ по своей башне — улучшение. ПКМ по башне — снять (50% золота возвращается)."
         : "Нет героев — откройте кейсы в главном меню.";
     }
   }
@@ -471,6 +471,16 @@
         if (typeof SFX !== "undefined") SFX.towerPlace();
       } else if (typeof SFX !== "undefined") {
         SFX.uiNope();
+      }
+    };
+    canvas.oncontextmenu = function (ev) {
+      ev.preventDefault();
+      if (!gameInstance || !gameInstance.running) return;
+      var g = gameInstance.screenToGrid(ev.clientX, ev.clientY);
+      if (gameInstance.towerAt(g.gx, g.gy)) {
+        if (gameInstance.tryRemoveTower(g.gx, g.gy)) {
+          if (typeof SFX !== "undefined" && SFX.towerPlace) SFX.towerPlace();
+        }
       }
     };
     canvas.onmousemove = function (ev) {

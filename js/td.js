@@ -2077,6 +2077,37 @@ var TDGame = (function () {
     return true;
   };
 
+  /** Сумма золота, потраченного на башню (покупка + все улучшения). */
+  Game.prototype._towerInvestedGold = function (tw) {
+    var def = tw.def;
+    if (!def) return 0;
+    var total = def.cost | 0;
+    var L = tw.upgradeLevel | 0;
+    for (var k = 1; k <= L; k++) {
+      total += Math.floor(def.cost * (0.42 + k * 0.28));
+    }
+    return total;
+  };
+
+  /**
+   * Снять башню с клетки. Возвращает 50% от вложенного золота (округление вниз).
+   */
+  Game.prototype.tryRemoveTower = function (gx, gy) {
+    if (gx < 0 || gy < 0 || gx >= GW || gy >= GH) return false;
+    var tw = this.towerAt(gx, gy);
+    if (!tw) return false;
+    var refund = (this._towerInvestedGold(tw) * 0.5) | 0;
+    for (var i = 0; i < this.towers.length; i++) {
+      if (this.towers[i].gx === gx && this.towers[i].gy === gy) {
+        this.towers.splice(i, 1);
+        break;
+      }
+    }
+    this.gold += refund;
+    this._notifyUi();
+    return true;
+  };
+
   Game.prototype.render = function () {
     var ctx = this.ctx;
     var at = this.animTime || 0;
