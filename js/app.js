@@ -66,6 +66,7 @@
     if (r === "epic") return "Эпический";
     if (r === "legendary") return "Легендарный";
     if (r === "mythical") return "Мифический";
+    if (r === "verdant") return "Древний";
     return r;
   }
 
@@ -203,7 +204,9 @@
       var hero = result.hero;
       card.className =
         "hero-card " +
-        (hero.rarity === "mythical"
+        (hero.rarity === "verdant"
+          ? "verdant"
+          : hero.rarity === "mythical"
           ? "mythical"
           : hero.rarity === "legendary"
             ? "legendary"
@@ -285,20 +288,42 @@
         btn.dataset.towerId = def.id;
         var h = getHeroById(def.id);
         var titleLine = h ? h.name + " — " + def.name : def.name;
+        var rarityHtml = "";
+        if (def.heroRarity) {
+          rarityHtml =
+            '<span class="rarity-badge tower-rarity-pill ' +
+            rarityClass(def.heroRarity) +
+            '">' +
+            rarityLabelRu(def.heroRarity) +
+            "</span> ";
+        }
         var mechHint =
           h && h.tower && h.tower.mechanicDesc
             ? '<br/><small class="tower-mech">' +
               h.tower.mechanicDesc +
               "</small>"
             : "";
+        var statHint =
+          def.damage > 0
+            ? '<br/><small class="tower-stats-hint">Урон ' +
+              def.damage +
+              " · дальн. " +
+              def.range +
+              " · CD " +
+              def.cooldown +
+              "</small>"
+            : "";
         btn.innerHTML =
           '<span class="tower-icon" style="background:linear-gradient(145deg,' +
           def.color +
-          ',#0f172a)"></span><span><strong>' +
+          ',#0f172a)"></span><span>' +
+          rarityHtml +
+          "<strong>" +
           titleLine +
           "</strong><br/><small>" +
           def.cost +
           " зол.</small>" +
+          statHint +
           mechHint +
           "</span>";
         btn.addEventListener("click", function () {
@@ -319,7 +344,7 @@
     }
     if (hint) {
       hint.textContent = any
-        ? "Пустая клетка — построить выбранную башню. ЛКМ по своей башне — улучшение. ПКМ по башне — снять (50% золота возвращается)."
+        ? "Пустая клетка — построить выбранную башню. ЛКМ — улучшение, ПКМ — снять (50% золота). Чем выше редкость героя, тем сильнее его башня (урон, дальность, скорость атаки; выше цена)."
         : "Нет героев — откройте кейсы в главном меню.";
     }
   }

@@ -15,6 +15,8 @@
   --rarity-legendary: #fbbf24;
   --rarity-mythical: #22d3ee;
   --rarity-mythical-glow: rgba(34, 211, 238, 0.55);
+  --rarity-verdant: #10b981;
+  --rarity-verdant-glow: rgba(16, 185, 129, 0.5);
   --font-ui: "Outfit", system-ui, sans-serif;
   --font-display: "Cinzel", Georgia, serif;
   --radius: 14px;
@@ -1041,6 +1043,27 @@ body.view-game .tower-list {
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
+.btn-chest-emerald {
+  background: linear-gradient(125deg, #047857, #14532d, #047857);
+  color: #ecfdf5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 4px 0 #000,
+    0 0 0 1px rgba(52, 211, 153, 0.55),
+    0 10px 28px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(167, 243, 208, 0.2);
+}
+
+.btn-chest-emerald:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 6px 0 #000,
+    0 0 0 1px rgba(110, 231, 183, 0.75),
+    0 14px 40px rgba(16, 185, 129, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 .btn-chest-trial {
   background: var(--btn-surface-title);
   color: #ecfdf5;
@@ -1201,6 +1224,23 @@ body.view-game .tower-list {
     0 0 72px rgba(34, 211, 238, 0.32);
 }
 
+.case-card--emerald {
+  background: linear-gradient(160deg, rgba(6, 78, 59, 0.45) 0%, rgba(15, 23, 42, 0.94) 48%, rgba(2, 6, 23, 0.98) 100%);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 14px 44px rgba(0, 0, 0, 0.48),
+    0 0 72px rgba(16, 185, 129, 0.14);
+}
+
+.case-card--emerald:hover {
+  border-color: rgba(110, 231, 183, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 20px 56px rgba(0, 0, 0, 0.42),
+    0 0 64px rgba(16, 185, 129, 0.28);
+}
+
 .case-tier-badge {
   position: absolute;
   top: 0.85rem;
@@ -1244,6 +1284,13 @@ body.view-game .tower-list {
   box-shadow: 0 4px 22px rgba(34, 211, 238, 0.28);
 }
 
+.case-tier-badge--emerald {
+  color: #ecfdf5;
+  background: linear-gradient(90deg, rgba(5, 150, 105, 0.8), rgba(20, 83, 45, 0.92));
+  border: 1px solid rgba(110, 231, 183, 0.55);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+}
+
 .case-visual-wrap {
   position: relative;
   margin: 0 0 1.15rem;
@@ -1266,6 +1313,10 @@ body.view-game .tower-list {
 
 .case-card--diamond .case-visual-wrap {
   background: radial-gradient(ellipse 90% 80% at 50% 100%, rgba(34, 211, 238, 0.2), transparent 55%);
+}
+
+.case-card--emerald .case-visual-wrap {
+  background: radial-gradient(ellipse 90% 80% at 50% 100%, rgba(16, 185, 129, 0.22), transparent 55%);
 }
 
 .case-visual-glow {
@@ -1293,6 +1344,12 @@ body.view-game .tower-list {
   background:
     radial-gradient(ellipse 45% 40% at 50% 45%, rgba(255, 255, 255, 0.22), transparent 65%),
     radial-gradient(ellipse 50% 45% at 50% 45%, rgba(34, 211, 238, 0.35), transparent 70%);
+}
+
+.case-visual-glow--emerald {
+  background:
+    radial-gradient(ellipse 45% 40% at 50% 45%, rgba(255, 255, 255, 0.18), transparent 65%),
+    radial-gradient(ellipse 50% 45% at 50% 45%, rgba(16, 185, 129, 0.38), transparent 70%);
 }
 
 
@@ -1462,6 +1519,24 @@ body.view-game .tower-list {
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
+.case-chest-lock--emerald {
+  background: linear-gradient(145deg, #d1fae5, #10b981, #065f46, #022c22);
+  box-shadow:
+    0 3px 16px rgba(16, 185, 129, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.case-emerald .case-chest-band {
+  background: linear-gradient(90deg, transparent, rgba(167, 243, 208, 0.55), rgba(16, 185, 129, 0.95), rgba(52, 211, 153, 0.75), transparent);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.45);
+}
+
+.case-emerald .case-chest-lid {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(167, 243, 208, 0.35) 45%, rgba(6, 95, 70, 0.35) 100%);
+  box-shadow:
+    0 4px 12px rgba(16, 185, 129, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
 
 .case-common {
   background: linear-gradient(168deg, #a8a29e 0%, #57534e 28%, #292524 62%, #0c0a09 100%);
@@ -1565,6 +1640,52 @@ body.view-game .tower-list {
   z-index: 2;
 }
 
+.case-emerald {
+  background-color: #064e3b;
+  background-image:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.28) 0%, transparent 40%),
+    linear-gradient(210deg, rgba(52, 211, 153, 0.35) 0%, transparent 42%),
+    linear-gradient(168deg, #a7f3d0 0%, #10b981 18%, #047857 42%, #0f172a 72%, #020617 100%);
+  border: 2px solid rgba(110, 231, 183, 0.65);
+  box-shadow:
+    inset 0 3px 16px rgba(0, 0, 0, 0.45),
+    0 10px 28px rgba(0, 0, 0, 0.35),
+    0 0 26px rgba(16, 185, 129, 0.32);
+}
+
+.case-emerald::after {
+  content: "";
+  position: absolute;
+  inset: 9%;
+  border: 2px solid rgba(167, 243, 208, 0.65);
+  border-radius: 12px;
+  box-shadow:
+    0 0 36px var(--rarity-verdant-glow),
+    inset 0 0 28px rgba(16, 185, 129, 0.18);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.case-emerald::before {
+  content: "";
+  position: absolute;
+  inset: auto;
+  left: 50%;
+  top: 56%;
+  width: 32px;
+  height: 40px;
+  margin: -20px 0 0 -16px;
+  transform: rotate(30deg) skewY(-18deg);
+  border-radius: 3px 8px 3px 8px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(16, 185, 129, 0.75), rgba(5, 150, 105, 0.9));
+  box-shadow:
+    0 0 18px rgba(167, 243, 208, 0.55),
+    inset 0 0 10px rgba(255, 255, 255, 0.35);
+  animation: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .case-title {
   margin: 0 0 0.45rem;
   font-size: 1.22rem;
@@ -1627,6 +1748,25 @@ body.view-game .tower-list {
   }
 }
 
+.case-title--emerald {
+  background: linear-gradient(90deg, #d1fae5, #6ee7b7, #34d399, #d1fae5);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 14px rgba(16, 185, 129, 0.45));
+  animation: caseTitleEmerald 5.5s linear infinite;
+}
+
+@keyframes caseTitleEmerald {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
 .case-card h3:not(.case-title) {
   margin: 0 0 0.45rem;
   font-size: 1.2rem;
@@ -1676,13 +1816,20 @@ body.view-game .tower-list {
   border-color: rgba(34, 211, 238, 0.4);
 }
 
+.case-card--emerald .case-price {
+  color: #a7f3d0;
+  background: rgba(6, 78, 59, 0.45);
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
 .case-card--bronze .case-price .currency-gold {
   color: var(--gold);
 }
 
 .case-card--silver .case-price .currency-gem,
 .case-card--gold .case-price .currency-gem,
-.case-card--diamond .case-price .currency-gem {
+.case-card--diamond .case-price .currency-gem,
+.case-card--emerald .case-price .currency-gem {
   color: var(--gem);
 }
 
@@ -1913,6 +2060,12 @@ body.view-game .tower-list {
   color: #0f172a;
   font-weight: 800;
   box-shadow: 0 0 18px var(--rarity-mythical-glow);
+}
+.rarity-verdant {
+  background: linear-gradient(125deg, rgba(16, 185, 129, 0.6), rgba(52, 211, 153, 0.45), rgba(5, 150, 105, 0.55));
+  color: #022c22;
+  font-weight: 800;
+  box-shadow: 0 0 18px var(--rarity-verdant-glow);
 }
 
 /* ——— Игра ——— */
@@ -2205,6 +2358,24 @@ body.view-game .tower-list {
   font-weight: 500;
   color: rgba(147, 197, 253, 0.9);
   line-height: 1.35;
+}
+
+.tower-btn .tower-rarity-pill {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.2rem 0.15rem 0;
+  font-size: 0.58rem;
+  padding: 0.12rem 0.38rem;
+  letter-spacing: 0.06em;
+}
+
+.tower-stats-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(167, 243, 252, 0.82);
+  letter-spacing: 0.04em;
 }
 
 .tower-btn.locked {
@@ -2658,6 +2829,13 @@ body.view-game .tower-list {
   box-shadow:
     0 0 56px var(--rarity-mythical-glow),
     0 0 28px rgba(167, 139, 250, 0.35);
+}
+
+.hero-card.verdant {
+  border-color: var(--rarity-verdant);
+  box-shadow:
+    0 0 52px var(--rarity-verdant-glow),
+    0 0 24px rgba(52, 211, 153, 0.35);
 }
 
 .hero-card.epic {

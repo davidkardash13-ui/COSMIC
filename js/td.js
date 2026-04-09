@@ -386,44 +386,106 @@ var TDGame = (function () {
     return { x: last.b.x, y: last.b.y };
   }
 
+  /**
+   * Множители к базовым статам башни из heroes.js: чем выше редкость героя, тем сильнее башня в бою (и дороже).
+   */
+  function towerRarityScale(rarity) {
+    var tiers = {
+      common: { cost: 1, damage: 1, range: 1, cooldown: 1, splash: 1, slow: 1 },
+      rare: { cost: 1.04, damage: 1.06, range: 1.03, cooldown: 0.98, splash: 1.05, slow: 1.04 },
+      epic: { cost: 1.08, damage: 1.12, range: 1.06, cooldown: 0.95, splash: 1.1, slow: 1.07 },
+      legendary: { cost: 1.12, damage: 1.18, range: 1.09, cooldown: 0.92, splash: 1.14, slow: 1.1 },
+      mythical: { cost: 1.16, damage: 1.24, range: 1.12, cooldown: 0.88, splash: 1.18, slow: 1.13 },
+      verdant: { cost: 1.2, damage: 1.3, range: 1.15, cooldown: 0.85, splash: 1.22, slow: 1.16 },
+    };
+    return tiers[rarity] || tiers.common;
+  }
+
   function buildTowerTypes() {
     var out = [];
     for (var i = 0; i < HEROES.length; i++) {
       var h = HEROES[i];
       if (!h.tower) continue;
       var t = h.tower;
+      var sc = towerRarityScale(h.rarity || "common");
+      var cd = Math.max(12, Math.round(t.cooldown * sc.cooldown));
+      var spl = t.splash ? Math.max(0, Math.round(t.splash * sc.splash)) : 0;
+      var sl = t.slow ? Math.min(0.92, t.slow * sc.slow) : 0;
       out.push({
         id: h.id,
         heroId: h.id,
+        heroRarity: h.rarity || "common",
         name: t.name,
-        cost: t.cost,
-        range: t.range,
-        damage: t.damage,
-        cooldown: t.cooldown,
+        cost: Math.max(45, Math.round(t.cost * sc.cost)),
+        range: Math.max(40, Math.round(t.range * sc.range)),
+        damage: Math.max(1, Math.round(t.damage * sc.damage)),
+        cooldown: cd,
         color: t.color,
-        splash: t.splash || 0,
-        slow: t.slow || 0,
+        splash: spl,
+        slow: sl,
         mechanic: t.mechanic || "standard",
         mechanicDesc: t.mechanicDesc || "",
       });
     }
-    // Экономическая башня: не атакует, но приносит золото за пройденные волны.
-    out.push({
-      id: "farm",
-      heroId: null,
-      alwaysUnlocked: true,
-      name: "Ферма",
-      cost: 120,
-      range: 0,
-      damage: 0,
-      cooldown: 999999,
-      color: "#22c55e",
-      splash: 0,
-      slow: 0,
-      mechanic: "farm",
-      mechanicDesc: "Не атакует. Пассивный доход за каждую пройденную волну.",
-      incomePerWave: 18,
-    });
+    // Экономические башни (фермы): не атакуют, доход за пройденную волну.
+    var farmList = [
+      {
+        id: "farm",
+        name: "Ферма",
+        cost: 120,
+        color: "#22c55e",
+        incomePerWave: 18,
+        farmStyle: "rhombus",
+        desc: "Базовый доход за волну.",
+      },
+      {
+        id: "farm_pond",
+        name: "Рыбный пруд",
+        cost: 138,
+        color: "#0ea5e9",
+        incomePerWave: 21,
+        farmStyle: "pond",
+        desc: "Умеренный доход, компактная постройка.",
+      },
+      {
+        id: "farm_vineyard",
+        name: "Виноградник",
+        cost: 165,
+        color: "#7c3aed",
+        incomePerWave: 26,
+        farmStyle: "vine",
+        desc: "Выше доход за волну.",
+      },
+      {
+        id: "farm_granary",
+        name: "Амбар",
+        cost: 198,
+        color: "#ca8a04",
+        incomePerWave: 34,
+        farmStyle: "granary",
+        desc: "Максимальный пассивный доход.",
+      },
+    ];
+    for (var fi = 0; fi < farmList.length; fi++) {
+      var fd = farmList[fi];
+      out.push({
+        id: fd.id,
+        heroId: null,
+        alwaysUnlocked: true,
+        name: fd.name,
+        cost: fd.cost,
+        range: 0,
+        damage: 0,
+        cooldown: 999999,
+        color: fd.color,
+        splash: 0,
+        slow: 0,
+        mechanic: "farm",
+        mechanicDesc: "Не атакует. +" + fd.incomePerWave + " зол. за пройденную волну (растёт с улучшением). " + fd.desc,
+        incomePerWave: fd.incomePerWave,
+        farmStyle: fd.farmStyle,
+      });
+    }
     return out;
   }
 
@@ -602,35 +664,99 @@ var TDGame = (function () {
       y = tw.y,
       lvl = tw.upgradeLevel | 0;
     if (tw.def && tw.def.mechanic === "farm") {
-      var c0 = "#22c55e";
-      var c1 = "#14532d";
       var pulse = 0.9 + 0.1 * Math.sin((animTime || 0) * 0.0028);
       var R = (14 + lvl * 2.1) * pulse;
+      var style = tw.def.farmStyle || "rhombus";
+      var base = tw.def.color || "#22c55e";
+      var oRgb = hexToRgb(base);
+      var dark =
+        oRgb != null
+          ? "rgb(" + ((oRgb.r * 0.35) | 0) + "," + ((oRgb.g * 0.35) | 0) + "," + ((oRgb.b * 0.35) | 0) + ")"
+          : "#14532d";
       ctx.save();
-      ctx.shadowColor = "rgba(34,197,94,0.55)";
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.moveTo(x, y - R);
-      ctx.lineTo(x + R, y);
-      ctx.lineTo(x, y + R);
-      ctx.lineTo(x - R, y);
-      ctx.closePath();
-      var g0 = ctx.createLinearGradient(x - R, y - R, x + R, y + R);
-      g0.addColorStop(0, c0);
-      g0.addColorStop(1, c1);
-      ctx.fillStyle = g0;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(255,255,255,0.22)";
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(x + R * 0.45, y - R * 0.35, 4.6 + lvl * 0.35, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(251,191,36,0.85)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.25)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
+      if (style === "pond") {
+        ctx.shadowColor = base + "99";
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(x, y, R * 1.05, 0, Math.PI * 2);
+        var pg = ctx.createRadialGradient(x - R * 0.3, y - R * 0.3, 2, x, y, R * 1.2);
+        pg.addColorStop(0, lightenHex(base, 0.35));
+        pg.addColorStop(0.55, base);
+        pg.addColorStop(1, dark);
+        ctx.fillStyle = pg;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.28)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, R * 0.45, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      } else if (style === "vine") {
+        ctx.shadowColor = base + "88";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.ellipse(x, y, R * 1.05, R * 0.78, Math.sin((animTime || 0) * 0.0015) * 0.12, 0, Math.PI * 2);
+        var vg = ctx.createLinearGradient(x - R, y - R, x + R, y + R);
+        vg.addColorStop(0, lightenHex(base, 0.25));
+        vg.addColorStop(1, dark);
+        ctx.fillStyle = vg;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(167, 243, 208, 0.45)";
+        ctx.beginPath();
+        ctx.arc(x - R * 0.35, y, 3 + lvl * 0.4, 0, Math.PI * 2);
+        ctx.arc(x + R * 0.4, y - R * 0.2, 2.5 + lvl * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (style === "granary") {
+        var w = R * 1.35,
+          h = R * 1.05;
+        var gx0 = x - w / 2,
+          gy0 = y - h / 2;
+        ctx.shadowColor = "rgba(202, 138, 4, 0.45)";
+        ctx.shadowBlur = 14;
+        var gg = ctx.createLinearGradient(x, gy0, x, gy0 + h);
+        gg.addColorStop(0, lightenHex(base, 0.2));
+        gg.addColorStop(1, dark);
+        ctx.fillStyle = gg;
+        ctx.fillRect(gx0, gy0, w, h);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(gx0, gy0, w, h);
+        ctx.fillStyle = "rgba(254, 243, 199, 0.5)";
+        ctx.fillRect(x - w * 0.35, y - h * 0.15, w * 0.7, h * 0.12);
+      } else {
+        ctx.shadowColor = (oRgb ? "rgba(" + oRgb.r + "," + oRgb.g + "," + oRgb.b + ",0.55)" : "rgba(34,197,94,0.55)");
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.moveTo(x, y - R);
+        ctx.lineTo(x + R, y);
+        ctx.lineTo(x, y + R);
+        ctx.lineTo(x - R, y);
+        ctx.closePath();
+        var g0 = ctx.createLinearGradient(x - R, y - R, x + R, y + R);
+        g0.addColorStop(0, base);
+        g0.addColorStop(1, dark);
+        ctx.fillStyle = g0;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + R * 0.45, y - R * 0.35, 4.6 + lvl * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(251,191,36,0.85)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0,0,0,0.25)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
       ctx.restore();
       return;
     }

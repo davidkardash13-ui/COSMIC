@@ -32,5 +32,6 @@ var GAME_CONFIG = {
     WELCOME: { gold: 250, gems: 25, title: "Стартовый набор" },
     AETHER: { gold: 400, gems: 15, title: "Эфирный бонус" },
     MYSTERY: { gold: 180, gems: 40, title: "Загадочный подарок" },
+    DIAMOND280: { gold: 0, gems: 280, title: "280 кристаллов" },
   },
 };
