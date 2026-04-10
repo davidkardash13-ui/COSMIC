@@ -57,44 +57,6 @@
     }
   }
 
-  function questClaimKey(period, questId) {
-    if (period === "daily") return "daily:" + questId + ":" + dateKeyLocal();
-    if (period === "weekly") return "weekly:" + questId + ":" + weekPeriodKey();
-    return "monthly:" + questId + ":" + monthKeyLocal();
-  }
-
-  function isQuestRewardClaimed(period, questId) {
-    var key = questClaimKey(period, questId);
-    var arr = state.questRewardClaims || [];
-    return arr.indexOf(key) !== -1;
-  }
-
-  function processQuestRewards() {
-    if (!state.questRewardClaims) state.questRewardClaims = [];
-    var claims = state.questRewardClaims;
-    function grant(period, list) {
-      for (var i = 0; i < list.length; i++) {
-        var q = list[i];
-        if (!q.done(state)) continue;
-        var key = questClaimKey(period, q.id);
-        if (claims.indexOf(key) !== -1) continue;
-        claims.push(key);
-        state.gold += typeof q.rewardGold === "number" ? q.rewardGold : 0;
-        state.gems += typeof q.rewardGems === "number" ? q.rewardGems : 0;
-      }
-    }
-    grant("daily", QUESTS_DAILY);
-    grant("weekly", QUESTS_WEEKLY);
-    grant("monthly", QUESTS_MONTHLY);
-  }
-
-  function formatQuestRewardLine(q) {
-    var parts = [];
-    if (q.rewardGold) parts.push('<span class="quest-reward-gold">' + q.rewardGold + "</span> зол.");
-    if (q.rewardGems) parts.push('<span class="quest-reward-gem">' + q.rewardGems + "</span> крист.");
-    return parts.length ? parts.join(" · ") : "";
-  }
-
   function showScreen(id) {
     var screens = document.querySelectorAll(".screen");
     for (var i = 0; i < screens.length; i++) {
@@ -258,6 +220,44 @@
       },
     },
   ];
+
+  function questClaimKey(period, questId) {
+    if (period === "daily") return "daily:" + questId + ":" + dateKeyLocal();
+    if (period === "weekly") return "weekly:" + questId + ":" + weekPeriodKey();
+    return "monthly:" + questId + ":" + monthKeyLocal();
+  }
+
+  function isQuestRewardClaimed(period, questId) {
+    var key = questClaimKey(period, questId);
+    var arr = state.questRewardClaims || [];
+    return arr.indexOf(key) !== -1;
+  }
+
+  function processQuestRewards() {
+    if (!state.questRewardClaims) state.questRewardClaims = [];
+    var claims = state.questRewardClaims;
+    function grant(period, list) {
+      for (var i = 0; i < list.length; i++) {
+        var q = list[i];
+        if (!q.done(state)) continue;
+        var key = questClaimKey(period, q.id);
+        if (claims.indexOf(key) !== -1) continue;
+        claims.push(key);
+        state.gold += typeof q.rewardGold === "number" ? q.rewardGold : 0;
+        state.gems += typeof q.rewardGems === "number" ? q.rewardGems : 0;
+      }
+    }
+    grant("daily", QUESTS_DAILY);
+    grant("weekly", QUESTS_WEEKLY);
+    grant("monthly", QUESTS_MONTHLY);
+  }
+
+  function formatQuestRewardLine(q) {
+    var parts = [];
+    if (q.rewardGold) parts.push('<span class="quest-reward-gold">' + q.rewardGold + "</span> зол.");
+    if (q.rewardGems) parts.push('<span class="quest-reward-gem">' + q.rewardGems + "</span> крист.");
+    return parts.length ? parts.join(" · ") : "";
+  }
 
   function renderQuestList(root, meta, period) {
     if (!root || !meta) return;
