@@ -1,7 +1,9 @@
 /* eslint-disable no-unused-vars */
 var GAME_CONFIG = {
-  /** Семантическая версия (показ V-x.y.z). Параметр ?v= в index.html — отдельный счётчик сброса кэша статики. */
-  APP_VERSION: "1.0.3",
+  /** Семантическая версия (показ V-x.y.z в меню). */
+  APP_VERSION: "1.0.6",
+  /** Должно совпадать с ?v= у link/script в index.html (сброс кэша CSS/JS). */
+  ASSET_VERSION: "18",
   MAX_WAVES: 30,
   START_LIVES: 12,
   START_GOLD: 140,

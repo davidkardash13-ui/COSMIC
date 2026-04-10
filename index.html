@@ -10,13 +10,30 @@
   gtag('config', 'G-NM8SHPLMTY');
 </script>  
 <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        if (location.protocol === "file:") return;
+        var p = location.pathname;
+        if (/\.html?$/i.test(p)) p = p.replace(/[^/]+$/, "");
+        else if (p && p !== "/" && !p.endsWith("/")) p += "/";
+        if (p && p !== "/") {
+          var b = document.createElement("base");
+          b.href = p;
+          document.head.insertBefore(b, document.head.firstChild);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aether Guard — Tower Defense</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
-  <!-- При выкладке обновления увеличьте ?v= у styles и script (сброс кэша браузера). -->
-  <link rel="stylesheet" href="css/styles.css?v=15" />
+  <!-- При выкладке увеличьте ?v= у styles и script (сброс кэша на GitHub Pages и в браузере). -->
+  <link rel="stylesheet" href="css/styles.css?v=18" />
 </head>
 <body class="is-loading">
   <div id="app-loader" class="app-loader" aria-busy="true" aria-live="polite" role="status">
@@ -336,12 +353,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=15"></script>
-  <script src="js/storage.js?v=15"></script>
-  <script src="js/heroes.js?v=15"></script>
-  <script src="js/cases.js?v=15"></script>
-  <script src="js/sounds.js?v=15"></script>
-  <script src="js/td.js?v=15"></script>
-  <script src="js/app.js?v=15"></script>
+  <script src="js/config.js?v=18"></script>
+  <script src="js/storage.js?v=18"></script>
+  <script src="js/heroes.js?v=18"></script>
+  <script src="js/cases.js?v=18"></script>
+  <script src="js/sounds.js?v=18"></script>
+  <script src="js/td.js?v=18"></script>
+  <script src="js/app.js?v=18"></script>
 </body>
 </html>
