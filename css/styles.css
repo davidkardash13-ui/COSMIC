@@ -225,11 +225,20 @@ body.is-loading {
 }
 
 .app-loader__tag {
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.45rem;
   font-size: 0.72rem;
   letter-spacing: 0.42em;
   text-transform: uppercase;
   color: rgba(148, 163, 184, 0.85);
+}
+
+.app-loader__version {
+  margin: 0 0 1.35rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.32em;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.7);
 }
 
 .app-loader__bar {
@@ -705,6 +714,30 @@ body.view-game .tower-list {
   text-align: center;
   margin-top: clamp(2rem, 8vh, 5rem);
   margin-bottom: 2.5rem;
+}
+
+.menu-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.menu-logo__svg {
+  width: clamp(72px, 20vw, 100px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 26px rgba(94, 234, 212, 0.38));
+}
+
+.app-version {
+  text-align: center;
+  margin: 1.4rem 0 0;
+  padding: 0 1rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.72);
 }
 
 .title-main {
@@ -1840,7 +1873,8 @@ body.view-game .tower-list {
 /* (Пасхальные стили удалены) */
 
 /* ——— Коллекция ——— */
-.collection-tabs {
+.collection-tabs,
+.quests-tabs {
   display: flex;
   gap: 0.6rem;
   justify-content: center;
@@ -1877,7 +1911,8 @@ body.view-game .tower-list {
     0 12px 32px rgba(14, 165, 233, 0.22);
 }
 
-.collection-panel.hidden {
+.collection-panel.hidden,
+.quests-panel.hidden {
   display: none;
 }
 
@@ -1904,6 +1939,154 @@ body.view-game .tower-list {
   font-size: 0.88rem;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+/* ——— Квесты ——— */
+#screen-quests .screen-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.screen-quests-title {
+  flex: 1;
+  min-width: 200px;
+}
+
+.screen-quests-title h2 {
+  margin: 0 0 0.25rem;
+}
+
+.screen-quests-sub {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.quests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.quest-card {
+  padding: 1.1rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.88));
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.quest-card:hover {
+  border-color: rgba(94, 234, 212, 0.22);
+}
+
+.quest-card--done {
+  border-color: rgba(52, 211, 153, 0.32);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(52, 211, 153, 0.08);
+}
+
+.quest-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.quest-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f1f5f9;
+}
+
+.quest-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: rgba(186, 230, 253, 0.92);
+  background: rgba(2, 6, 23, 0.45);
+}
+
+.quest-badge--done {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #a7f3d0;
+  background: rgba(6, 78, 59, 0.35);
+}
+
+.quest-desc {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.quest-reward {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(186, 230, 253, 0.88);
+}
+
+.quest-reward-gold {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.quest-reward-gem {
+  color: var(--gem);
+  font-weight: 700;
+}
+
+.quest-reward-status {
+  display: block;
+  margin: 0 0 0.75rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: rgba(148, 163, 184, 0.88);
+}
+
+.quest-reward-status--claimed {
+  color: #6ee7b7;
+}
+
+.quest-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.quest-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  transition: width 0.35s ease;
+}
+
+.quest-card--done .quest-progress-fill {
+  background: linear-gradient(90deg, #34d399, #5eead4);
+}
+
+.quest-progress-label {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.95);
+  text-align: right;
 }
 
 .collection-grid {

@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 var GAME_CONFIG = {
+  /** Версия клиента (показ в меню и на загрузке). Меняйте при релизах: V-1.0.3 */
+  APP_VERSION: "1.0.3",
   MAX_WAVES: 30,
   START_LIVES: 12,
   START_GOLD: 140,

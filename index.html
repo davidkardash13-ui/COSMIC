@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- После обновления игры на GitHub увеличьте ?v= у styles и script (иначе браузер держит старый кэш). -->
-  <link rel="stylesheet" href="css/styles.css?v=11" />
+  <link rel="stylesheet" href="css/styles.css?v=14" />
 </head>
 <body class="is-loading">
   <div id="app-loader" class="app-loader" aria-busy="true" aria-live="polite" role="status">
@@ -28,6 +28,7 @@
       </div>
       <div class="app-loader__title">Aether Guard</div>
       <p class="app-loader__tag">Tower Defense</p>
+      <p class="app-loader__version" id="loader-version" aria-hidden="true"></p>
       <div class="app-loader__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loader-bar">
         <span class="app-loader__progress"></span>
       </div>
@@ -46,6 +47,29 @@
     <!-- Главное меню -->
     <section id="screen-menu" class="screen screen-active">
       <div class="menu-brand">
+        <div class="menu-logo" aria-hidden="true">
+          <svg class="menu-logo__svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logo-grad-ring" x1="20" y1="8" x2="100" y2="112" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#5eead4" />
+                <stop offset="0.45" stop-color="#818cf8" />
+                <stop offset="1" stop-color="#c084fc" />
+              </linearGradient>
+              <linearGradient id="logo-grad-core" x1="60" y1="28" x2="60" y2="92" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38bdf8" stop-opacity="0.95" />
+                <stop offset="1" stop-color="#6366f1" stop-opacity="0.75" />
+              </linearGradient>
+              <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.5" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M60 6L108 33V87L60 114L12 87V33L60 6Z" stroke="url(#logo-grad-ring)" stroke-width="3.2" fill="rgba(15,23,42,0.75)" filter="url(#logo-glow)" />
+            <path d="M60 22L92 40V76L60 94L28 76V40L60 22Z" fill="url(#logo-grad-core)" opacity="0.9" />
+            <path d="M60 36L72 52V72L60 80L48 72V52L60 36Z" fill="#0f172a" fill-opacity="0.55" />
+            <circle cx="60" cy="56" r="6" fill="#e0f2fe" opacity="0.95" />
+          </svg>
+        </div>
         <h1 class="title-main">Aether Guard</h1>
         <p class="subtitle">Tower Defense</p>
       </div>
@@ -53,6 +77,7 @@
         <button type="button" class="btn btn-primary" id="btn-play">Играть</button>
         <button type="button" class="btn btn-secondary" id="btn-cases">Кейсы с героями</button>
         <button type="button" class="btn btn-secondary" id="btn-collection">Коллекция</button>
+        <button type="button" class="btn btn-secondary" id="btn-quests">Квесты</button>
         <button type="button" class="btn btn-secondary" id="btn-promocodes">Промокоды</button>
         <button type="button" class="btn btn-secondary" id="btn-reset-progress">Сбросить прогресс</button>
       </nav>
@@ -60,6 +85,7 @@
         <span class="stat-pill"><span class="stat-label">Золото</span> <strong id="menu-gold">0</strong></span>
         <span class="stat-pill stat-pill-gem"><span class="stat-label">Кристаллы</span> <strong id="menu-gems">0</strong></span>
       </div>
+      <p class="app-version" id="app-version" aria-label="Версия игры"></p>
     </section>
 
     <!-- Выбор сложности перед началом боя -->
@@ -206,6 +232,31 @@
       </div>
     </section>
 
+    <!-- Квесты -->
+    <section id="screen-quests" class="screen screen-quests">
+      <header class="screen-header">
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-quests-back">← Назад</button>
+        <div class="screen-quests-title">
+          <h2>Квесты</h2>
+          <p class="screen-quests-sub">Цели и прогресс — обновляются по мере игры</p>
+        </div>
+      </header>
+      <div class="quests-tabs" role="tablist" aria-label="Период квестов">
+        <button type="button" class="collection-tab quests-tab is-active" id="tab-quests-daily" role="tab" aria-selected="true" aria-controls="quests-panel-daily">Ежедневные квесты</button>
+        <button type="button" class="collection-tab quests-tab" id="tab-quests-weekly" role="tab" aria-selected="false" aria-controls="quests-panel-weekly">Еженедельные квесты</button>
+        <button type="button" class="collection-tab quests-tab" id="tab-quests-monthly" role="tab" aria-selected="false" aria-controls="quests-panel-monthly">Ежемесячные квесты</button>
+      </div>
+      <div id="quests-panel-daily" class="quests-panel" role="tabpanel" aria-labelledby="tab-quests-daily" aria-live="polite">
+        <div id="quests-list-daily" class="quests-list"></div>
+      </div>
+      <div id="quests-panel-weekly" class="quests-panel hidden" role="tabpanel" aria-labelledby="tab-quests-weekly" aria-live="polite">
+        <div id="quests-list-weekly" class="quests-list"></div>
+      </div>
+      <div id="quests-panel-monthly" class="quests-panel hidden" role="tabpanel" aria-labelledby="tab-quests-monthly" aria-live="polite">
+        <div id="quests-list-monthly" class="quests-list"></div>
+      </div>
+    </section>
+
     <!-- Игра -->
     <section id="screen-game" class="screen screen-game">
       <div class="game-hud game-hud--styled">
@@ -285,12 +336,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=11"></script>
-  <script src="js/storage.js?v=11"></script>
-  <script src="js/heroes.js?v=11"></script>
-  <script src="js/cases.js?v=11"></script>
-  <script src="js/sounds.js?v=11"></script>
-  <script src="js/td.js?v=11"></script>
-  <script src="js/app.js?v=11"></script>
+  <script src="js/config.js?v=14"></script>
+  <script src="js/storage.js?v=14"></script>
+  <script src="js/heroes.js?v=14"></script>
+  <script src="js/cases.js?v=14"></script>
+  <script src="js/sounds.js?v=14"></script>
+  <script src="js/td.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
 </body>
 </html>

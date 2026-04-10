@@ -11,6 +11,90 @@
     return document.getElementById(id);
   }
 
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function dateKeyLocal() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function monthKeyLocal() {
+    return dateKeyLocal().slice(0, 7);
+  }
+
+  function weekPeriodKey() {
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    var day = d.getDay();
+    var diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    var monday = new Date(d.getFullYear(), d.getMonth(), diff);
+    return monday.getFullYear() + "-" + pad2(monday.getMonth() + 1) + "-" + pad2(monday.getDate());
+  }
+
+  function ensureQuestPeriods(s) {
+    if (!s) return;
+    var dk = dateKeyLocal();
+    var wk = weekPeriodKey();
+    var mk = monthKeyLocal();
+    if (s.questsDayKey !== dk) {
+      s.questsDayKey = dk;
+      s.dailyWins = 0;
+      s.dailyCasesOpened = 0;
+      s.dailyBestWave = 0;
+    }
+    if (s.questsWeekKey !== wk) {
+      s.questsWeekKey = wk;
+      s.weeklyWins = 0;
+      s.weeklyBestWave = 0;
+      s.weeklyCasesOpened = 0;
+    }
+    if (s.questsMonthKey !== mk) {
+      s.questsMonthKey = mk;
+      s.monthlyWins = 0;
+      s.monthlyCasesOpened = 0;
+    }
+  }
+
+  function questClaimKey(period, questId) {
+    if (period === "daily") return "daily:" + questId + ":" + dateKeyLocal();
+    if (period === "weekly") return "weekly:" + questId + ":" + weekPeriodKey();
+    return "monthly:" + questId + ":" + monthKeyLocal();
+  }
+
+  function isQuestRewardClaimed(period, questId) {
+    var key = questClaimKey(period, questId);
+    var arr = state.questRewardClaims || [];
+    return arr.indexOf(key) !== -1;
+  }
+
+  function processQuestRewards() {
+    if (!state.questRewardClaims) state.questRewardClaims = [];
+    var claims = state.questRewardClaims;
+    function grant(period, list) {
+      for (var i = 0; i < list.length; i++) {
+        var q = list[i];
+        if (!q.done(state)) continue;
+        var key = questClaimKey(period, q.id);
+        if (claims.indexOf(key) !== -1) continue;
+        claims.push(key);
+        state.gold += typeof q.rewardGold === "number" ? q.rewardGold : 0;
+        state.gems += typeof q.rewardGems === "number" ? q.rewardGems : 0;
+      }
+    }
+    grant("daily", QUESTS_DAILY);
+    grant("weekly", QUESTS_WEEKLY);
+    grant("monthly", QUESTS_MONTHLY);
+  }
+
+  function formatQuestRewardLine(q) {
+    var parts = [];
+    if (q.rewardGold) parts.push('<span class="quest-reward-gold">' + q.rewardGold + "</span> зол.");
+    if (q.rewardGems) parts.push('<span class="quest-reward-gem">' + q.rewardGems + "</span> крист.");
+    return parts.length ? parts.join(" · ") : "";
+  }
+
   function showScreen(id) {
     var screens = document.querySelectorAll(".screen");
     for (var i = 0; i < screens.length; i++) {
@@ -33,8 +117,262 @@
   }
 
   function persist() {
+    ensureQuestPeriods(state);
+    processQuestRewards();
     Storage.save(state);
     refreshMenuStats();
+    if ($("quests-list-daily")) renderQuests();
+  }
+
+  var QUESTS_DAILY = [
+    {
+      id: "d-win",
+      title: "Победа дня",
+      desc: "Выиграйте хотя бы один полный забег сегодня (счётчик сбрасывается в полночь по локальному времени).",
+      rewardGold: 55,
+      rewardGems: 3,
+      max: 1,
+      cur: function (s) {
+        return Math.min(s.dailyWins || 0, 1);
+      },
+      done: function (s) {
+        return (s.dailyWins || 0) >= 1;
+      },
+    },
+    {
+      id: "d-cases",
+      title: "Сундуки дня",
+      desc: "Откройте 2 сундука с героями за сегодня.",
+      rewardGold: 55,
+      rewardGems: 3,
+      max: 2,
+      cur: function (s) {
+        return Math.min(s.dailyCasesOpened || 0, 2);
+      },
+      done: function (s) {
+        return (s.dailyCasesOpened || 0) >= 2;
+      },
+    },
+    {
+      id: "d-wave",
+      title: "Волна дня",
+      desc: "В любом забеге сегодня дойдите хотя бы до 5-й волны.",
+      rewardGold: 70,
+      rewardGems: 4,
+      max: 5,
+      cur: function (s) {
+        return Math.min(s.dailyBestWave || 0, 5);
+      },
+      done: function (s) {
+        return (s.dailyBestWave || 0) >= 5;
+      },
+    },
+  ];
+
+  var QUESTS_WEEKLY = [
+    {
+      id: "w-wins",
+      title: "Серия побед",
+      desc: "Одолейте все волны в 3 разных забегах за календарную неделю (от понедельника).",
+      rewardGold: 140,
+      rewardGems: 10,
+      max: 3,
+      cur: function (s) {
+        return Math.min(s.weeklyWins || 0, 3);
+      },
+      done: function (s) {
+        return (s.weeklyWins || 0) >= 3;
+      },
+    },
+    {
+      id: "w-wave",
+      title: "Глубина недели",
+      desc: "За эту неделю в любом забеге достигните 10-й волны (лучший результат недели).",
+      rewardGold: 180,
+      rewardGems: 14,
+      max: 10,
+      cur: function (s) {
+        return Math.min(s.weeklyBestWave || 0, 10);
+      },
+      done: function (s) {
+        return (s.weeklyBestWave || 0) >= 10;
+      },
+    },
+    {
+      id: "w-cases",
+      title: "Сундуки недели",
+      desc: "Откройте 5 сундуков за неделю.",
+      rewardGold: 160,
+      rewardGems: 12,
+      max: 5,
+      cur: function (s) {
+        return Math.min(s.weeklyCasesOpened || 0, 5);
+      },
+      done: function (s) {
+        return (s.weeklyCasesOpened || 0) >= 5;
+      },
+    },
+  ];
+
+  var QUESTS_MONTHLY = [
+    {
+      id: "m-wins",
+      title: "Месяц побед",
+      desc: "Одолейте все волны в 8 забегах за текущий календарный месяц.",
+      rewardGold: 320,
+      rewardGems: 28,
+      max: 8,
+      cur: function (s) {
+        return Math.min(s.monthlyWins || 0, 8);
+      },
+      done: function (s) {
+        return (s.monthlyWins || 0) >= 8;
+      },
+    },
+    {
+      id: "m-cases",
+      title: "Сундуки месяца",
+      desc: "Откройте 12 сундуков за месяц.",
+      rewardGold: 380,
+      rewardGems: 32,
+      max: 12,
+      cur: function (s) {
+        return Math.min(s.monthlyCasesOpened || 0, 12);
+      },
+      done: function (s) {
+        return (s.monthlyCasesOpened || 0) >= 12;
+      },
+    },
+    {
+      id: "m-wave",
+      title: "Рекордный рубеж",
+      desc: "Достигните в одном забеге волны 25 или выше (общий рекорд, не сбрасывается).",
+      rewardGold: 450,
+      rewardGems: 40,
+      max: 25,
+      cur: function (s) {
+        return Math.min(s.highestWave || 0, 25);
+      },
+      done: function (s) {
+        return (s.highestWave || 0) >= 25;
+      },
+    },
+  ];
+
+  function renderQuestList(root, meta, period) {
+    if (!root || !meta) return;
+    root.innerHTML = "";
+    for (var i = 0; i < meta.length; i++) {
+      var q = meta[i];
+      var done = q.done(state);
+      var claimed = isQuestRewardClaimed(period, q.id);
+      var cur = q.cur(state);
+      var max = q.max;
+      var pct = max > 0 ? Math.round((Math.min(cur, max) / max) * 100) : 0;
+      var rewardHtml = formatQuestRewardLine(q);
+      var rewardStatus =
+        done && claimed
+          ? '<span class="quest-reward-status quest-reward-status--claimed">Награда зачислена</span>'
+          : "";
+      var card = document.createElement("article");
+      card.className =
+        "quest-card" +
+        (done ? " quest-card--done" : "") +
+        (done && claimed ? " quest-card--claimed" : "");
+      card.setAttribute("data-quest", q.id);
+      card.innerHTML =
+        '<div class="quest-card-head">' +
+        '<h3 class="quest-title">' +
+        q.title +
+        "</h3>" +
+        (done
+          ? '<span class="quest-badge quest-badge--done">Выполнено</span>'
+          : '<span class="quest-badge">В процессе</span>') +
+        "</div>" +
+        '<p class="quest-desc">' +
+        q.desc +
+        "</p>" +
+        (rewardHtml
+          ? '<p class="quest-reward">Награда: ' + rewardHtml + "</p>" + rewardStatus
+          : "") +
+        '<div class="quest-progress" role="progressbar" aria-valuemin="0" aria-valuemax="' +
+        max +
+        '" aria-valuenow="' +
+        Math.min(cur, max) +
+        '"' +
+        (done ? ' aria-label="Прогресс: выполнено"' : "") +
+        ">" +
+        '<div class="quest-progress-fill" style="width:' +
+        pct +
+        '%"></div>' +
+        "</div>" +
+        '<p class="quest-progress-label">' +
+        Math.min(cur, max) +
+        " / " +
+        max +
+        "</p>";
+      root.appendChild(card);
+    }
+  }
+
+  function syncQuestsTabUi() {
+    var tab = state.questsTab === "weekly" || state.questsTab === "monthly" ? state.questsTab : "daily";
+    var bd = $("tab-quests-daily");
+    var bw = $("tab-quests-weekly");
+    var bm = $("tab-quests-monthly");
+    var pd = $("quests-panel-daily");
+    var pw = $("quests-panel-weekly");
+    var pm = $("quests-panel-monthly");
+    if (bd) {
+      bd.classList.toggle("is-active", tab === "daily");
+      bd.setAttribute("aria-selected", tab === "daily" ? "true" : "false");
+    }
+    if (bw) {
+      bw.classList.toggle("is-active", tab === "weekly");
+      bw.setAttribute("aria-selected", tab === "weekly" ? "true" : "false");
+    }
+    if (bm) {
+      bm.classList.toggle("is-active", tab === "monthly");
+      bm.setAttribute("aria-selected", tab === "monthly" ? "true" : "false");
+    }
+    if (pd) pd.classList.toggle("hidden", tab !== "daily");
+    if (pw) pw.classList.toggle("hidden", tab !== "weekly");
+    if (pm) pm.classList.toggle("hidden", tab !== "monthly");
+  }
+
+  function setQuestsTab(tab) {
+    tab = tab === "weekly" ? "weekly" : tab === "monthly" ? "monthly" : "daily";
+    state.questsTab = tab;
+    persist();
+  }
+
+  function renderQuests() {
+    ensureQuestPeriods(state);
+    renderQuestList($("quests-list-daily"), QUESTS_DAILY, "daily");
+    renderQuestList($("quests-list-weekly"), QUESTS_WEEKLY, "weekly");
+    renderQuestList($("quests-list-monthly"), QUESTS_MONTHLY, "monthly");
+    syncQuestsTabUi();
+  }
+
+  function refreshVersionLabels() {
+    var v =
+      typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.APP_VERSION
+        ? String(GAME_CONFIG.APP_VERSION)
+        : "0.0.0";
+    var label = "V-" + v;
+    var el = $("app-version");
+    if (el) el.textContent = label;
+    var lv = $("loader-version");
+    if (lv) lv.textContent = label;
+  }
+
+  function bindQuestsTabs() {
+    var td = $("tab-quests-daily");
+    var tw = $("tab-quests-weekly");
+    var tm = $("tab-quests-monthly");
+    if (td) td.addEventListener("click", function () { setQuestsTab("daily"); });
+    if (tw) tw.addEventListener("click", function () { setQuestsTab("weekly"); });
+    if (tm) tm.addEventListener("click", function () { setQuestsTab("monthly"); });
   }
 
   function initParticles() {
@@ -262,6 +600,10 @@
           if (result.compensationType === "gems") state.gems += result.compensation;
           else state.gold += result.compensation;
         }
+        ensureQuestPeriods(state);
+        state.dailyCasesOpened = (state.dailyCasesOpened || 0) + 1;
+        state.weeklyCasesOpened = (state.weeklyCasesOpened || 0) + 1;
+        state.monthlyCasesOpened = (state.monthlyCasesOpened || 0) + 1;
         persist();
         window.__openCaseAnimation(result, null, null);
       });
@@ -447,6 +789,12 @@
       hudUpdate(gameInstance);
     };
     gameInstance.onEnd = function (res) {
+      var waveReached = gameInstance.waveIndex;
+      ensureQuestPeriods(state);
+      if (typeof waveReached === "number") {
+        if (waveReached > (state.dailyBestWave || 0)) state.dailyBestWave = waveReached;
+        if (waveReached > (state.weeklyBestWave || 0)) state.weeklyBestWave = waveReached;
+      }
       gameInstance.stop();
       if (overlay) overlay.classList.remove("hidden");
       var title = $("overlay-title");
@@ -458,7 +806,10 @@
         state.gold += 520;
         state.gems += typeof GAME_CONFIG.GEMS_VICTORY_BONUS === "number" ? GAME_CONFIG.GEMS_VICTORY_BONUS : 28;
         state.gamesWon = (state.gamesWon || 0) + 1;
-        if (gameInstance.waveIndex > (state.highestWave || 0)) state.highestWave = gameInstance.waveIndex;
+        state.dailyWins = (state.dailyWins || 0) + 1;
+        state.weeklyWins = (state.weeklyWins || 0) + 1;
+        state.monthlyWins = (state.monthlyWins || 0) + 1;
+        if (waveReached > (state.highestWave || 0)) state.highestWave = waveReached;
         persist();
         if (title) title.textContent = "Победа!";
         if (text) {
@@ -619,6 +970,13 @@
       renderCollection();
       showScreen("screen-collection");
     });
+    var btnQuests = $("btn-quests");
+    if (btnQuests) {
+      btnQuests.addEventListener("click", function () {
+        renderQuests();
+        showScreen("screen-quests");
+      });
+    }
     var resetBtn = $("btn-reset-progress");
     if (resetBtn) {
       resetBtn.addEventListener("click", function () {
@@ -646,6 +1004,12 @@
     $("btn-collection-back").addEventListener("click", function () {
       showScreen("screen-menu");
     });
+    var btnQuestsBack = $("btn-quests-back");
+    if (btnQuestsBack) {
+      btnQuestsBack.addEventListener("click", function () {
+        showScreen("screen-menu");
+      });
+    }
     $("btn-game-exit").addEventListener("click", function () {
       if (gameInstance) {
         bankRunGemsFromGame();
@@ -847,8 +1211,14 @@
   bindUiSounds();
   bindPromoCodes();
   bindCollectionTabs();
+  bindQuestsTabs();
   bindCases();
+  refreshVersionLabels();
+  ensureQuestPeriods(state);
+  processQuestRewards();
+  Storage.save(state);
   refreshMenuStats();
   renderCollection();
+  renderQuests();
   initAppLoader();
 })();

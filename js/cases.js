@@ -140,13 +140,9 @@ var Cases = (function () {
   }
 
   function pay(state, caseType) {
-    var next = {
-      gold: state.gold,
-      gems: state.gems,
-      ownedHeroes: state.ownedHeroes.slice(),
-      highestWave: state.highestWave,
-      gamesWon: state.gamesWon,
-    };
+    var next = Object.assign({}, state, {
+      ownedHeroes: state.ownedHeroes ? state.ownedHeroes.slice() : [],
+    });
     if (caseType === "common") next.gold -= 150;
     else if (caseType === "rare") next.gems -= 40;
     else if (caseType === "legendary") next.gems -= 120;
