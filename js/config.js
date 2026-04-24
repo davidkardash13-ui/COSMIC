@@ -45,7 +45,8 @@ var GAME_CONFIG = {
     easy: { hpMul: 0.78, speedMul: 0.88, livesBonus: 4, goldBonus: 55, label: "Лёгкая" },
     normal: { hpMul: 1, speedMul: 1, livesBonus: 0, goldBonus: 0, label: "Обычная" },
     hard: { hpMul: 1.32, speedMul: 1.12, livesBonus: -4, goldBonus: -35, label: "Сложная" },
-    impossible: { hpMul: 1.85, speedMul: 1.22, livesBonus: -7, goldBonus: -70, label: "Невозможно" },
+    // «Невозможно» должна ощущаться сурово, но оставаться честно проходимой (это не "чит").
+    impossible: { hpMul: 1.38, speedMul: 1.08, livesBonus: -3, goldBonus: -20, label: "Невозможно" },
   },
 
   /** Промокоды (регистр не важен). Можно добавлять свои. */

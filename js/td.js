@@ -1150,6 +1150,9 @@ var TDGame = (function () {
     this._diffHpMul = D.hpMul;
     this._diffSpeedMul = D.speedMul;
     this.gameMode = opts.gameMode || "defense";
+    // Мягкое понижение силы врагов в «Рейде» (1 босс/волна), чтобы сочетания типа
+    // «Рейд + Невозможно» оставались проходимыми, не ломая обычный режим.
+    this._raidEnemyPowerMul = this.gameMode === "raid" ? 0.78 : 1;
     var multi = buildMultiLanePath(Math.random);
     this.pathKey = multi.pathKey;
     this.pathLanes = multi.lanes;
@@ -1684,9 +1687,17 @@ var TDGame = (function () {
     if (w > 18) hpBase = (hpBase * (1 + (w - 18) * 0.028)) | 0;
     hpBase = (hpBase * this._diffHpMul) | 0;
     hpBase = (hpBase * this._modifierMul("enemyHpMul", 1)) | 0;
+    if (this.gameMode === "raid") {
+      var rpm = typeof this._raidEnemyPowerMul === "number" && this._raidEnemyPowerMul > 0 ? this._raidEnemyPowerMul : 0.78;
+      hpBase = (hpBase * rpm) | 0;
+    }
     var speed = Math.min(2.62, 0.86 + w * 0.044);
     speed = Math.min(2.95, speed * this._diffSpeedMul);
     speed = speed * this._modifierMul("enemySpeedMul", 1);
+    if (this.gameMode === "raid") {
+      var spm = typeof this._raidEnemyPowerMul === "number" && this._raidEnemyPowerMul > 0 ? this._raidEnemyPowerMul : 0.78;
+      speed = Math.min(2.95, speed * (0.92 + 0.08 * spm));
+    }
     var reward = (4 + (w * 0.52) | 0) * this.bonuses.goldMul * this._modifierMul("rewardMul", 1);
 
     var armorWave = 0;
@@ -1699,6 +1710,10 @@ var TDGame = (function () {
     if (w > 25) armorWave = 0.33;
 
     armorWave = Math.min(0.56, armorWave + this._modifierAdd("armorAdd", 0));
+    if (this.gameMode === "raid") {
+      var apm = typeof this._raidEnemyPowerMul === "number" && this._raidEnemyPowerMul > 0 ? this._raidEnemyPowerMul : 0.78;
+      armorWave = Math.min(0.5, armorWave * (0.88 + 0.1 * apm));
+    }
     this._waveSpec = { hp: hpBase, speed: speed, reward: reward, armor: armorWave };
     this._notifyUi();
     if (typeof SFX !== "undefined" && SFX.waveStart) SFX.waveStart();
@@ -1818,7 +1833,8 @@ var TDGame = (function () {
     var spec = this._waveSpec;
     var w = this.waveIndex;
     var isRaid = this.gameMode === "raid";
-    var milestone = !isRaid && (w === 10 || w === 20 || w === 30);
+    var milestoneWaves = w === 10 || w === 20 || w === 30;
+    var milestone = !isRaid && milestoneWaves;
     var slot = this._spawnedThisWave;
     var total = this._toSpawnThisWave;
     var endBoss = milestone && slot === total - 1;
@@ -1855,7 +1871,9 @@ var TDGame = (function () {
       if (isRaid) {
         // «Рейд»: один босс на волну; рост силы — плавный (чтобы режим был про билд, а не про «стену»).
         // На поздних волнах бонус всё равно существенный, но без резких скачков.
-        hp *= 2.25 + (w - 1) * 0.11;
+        hp *= 1.95 + (w - 1) * 0.085;
+        var rpm0 = typeof this._raidEnemyPowerMul === "number" && this._raidEnemyPowerMul > 0 ? this._raidEnemyPowerMul : 0.78;
+        hp *= rpm0;
       }
       if (midBoss) {
         if (w === 10) hp *= 1.15;
@@ -1873,7 +1891,7 @@ var TDGame = (function () {
     var arm = Math.min(0.56, (spec.armor || 0) + K.armorAdd + (useCave ? 0.05 : useBurrow ? 0.04 : 0));
     if (isRaid && kindId === "boss") arm = Math.min(0.52, arm + 0.015 + w * 0.0025);
     var rw = spec.reward * K.rewardMul * (useCave ? 1.38 : useBurrow ? 1.26 : 1);
-    if (isRaid && kindId === "boss") rw *= 3.6;
+    if (isRaid && kindId === "boss") rw *= 2.9;
 
     var lane = useCave
       ? this.caveLane
@@ -1884,7 +1902,21 @@ var TDGame = (function () {
     var laneWp = lane.waypoints;
     var bossVariant = null;
     if (kindId === "boss") {
-      bossVariant = isRaid ? (w < 10 ? "hydra" : w < 20 ? "warden" : "reaver") : w === 10 ? "hydra" : w === 20 ? "warden" : w === 30 ? "reaver" : "boss";
+      bossVariant = isRaid
+        ? milestoneWaves
+          ? w === 10
+            ? "hydra"
+            : w === 20
+              ? "warden"
+              : "reaver"
+          : "boss"
+        : w === 10
+          ? "hydra"
+          : w === 20
+            ? "warden"
+            : w === 30
+              ? "reaver"
+              : "boss";
       // Конфигурация способностей (таймеры в мс)
       // hydra: призывает мелочь; warden: периодический щит; reaver: рывок вперёд.
     }
@@ -1914,13 +1946,14 @@ var TDGame = (function () {
       fromBurrow: !!useBurrow,
       bossVariant: bossVariant,
       titanVariant: titanVariant,
+      raidMode: !!isRaid,
       _lifeT: 0,
       _hx: laneWp[0].x,
       _hy: laneWp[0].y,
       _phase: Math.random() * Math.PI * 2,
       _shieldCd: kindId === "boss" && bossVariant === "warden" ? 1400 : 0,
       _dashCd: kindId === "boss" && bossVariant === "reaver" ? 1800 : 0,
-      _summonCd: kindId === "boss" && bossVariant === "hydra" ? 1200 : 0,
+      _summonCd: kindId === "boss" && bossVariant === "hydra" ? (isRaid ? 2200 : 1200) : 0,
       _shieldT: 0,
       _enrage: 0,
     };
@@ -2175,9 +2208,15 @@ var TDGame = (function () {
           e._summonCd = (e._summonCd || 0) - dt;
           if (e._summonCd <= 0) {
             e._summonCd = 3200 + Math.random() * 900;
-            // 2 миньона рядом с боссом
-            self._spawnMinionFromEnemy(e, "swarmling", 0.22, 1.25, 0.22);
-            self._spawnMinionFromEnemy(e, "runner", 0.26, 1.15, 0.24);
+            if (e.raidMode) {
+              // В «Рейде» мини‑армия от Гидры ломала баланс: реже и со слабее миньонами.
+              e._summonCd = 5200 + Math.random() * 1100;
+              self._spawnMinionFromEnemy(e, "swarmling", 0.16, 1.1, 0.16);
+            } else {
+              // 2 миньона рядом с боссом
+              self._spawnMinionFromEnemy(e, "swarmling", 0.22, 1.25, 0.22);
+              self._spawnMinionFromEnemy(e, "runner", 0.26, 1.15, 0.24);
+            }
           }
         }
         // Вариант 20: «Страж» — щит (сильнее против burst)
