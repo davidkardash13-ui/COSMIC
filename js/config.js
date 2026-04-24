@@ -3,14 +3,30 @@ var GAME_CONFIG = {
   /** Семантическая версия (показ V-x.y.z в меню). */
   APP_VERSION: "1.0.6",
   /** Должно совпадать с ?v= у link/script в index.html (сброс кэша CSS/JS). */
-  ASSET_VERSION: "18",
+  ASSET_VERSION: "21",
   MAX_WAVES: 30,
   START_LIVES: 12,
   START_GOLD: 140,
   WAVE_REWARD: 16,
-  GRID_W: 24,
-  GRID_H: 13,
   TILE: 40,
+  /**
+   * Случайный размер карты на каждый заход (клетки).
+   * Форма: случайно «широкая», «высокая» или без явного уклона.
+   */
+  MAP_GRID: {
+    W_MIN: 18,
+    W_MAX: 32,
+    H_MIN: 9,
+    H_MAX: 18,
+  },
+  /** Порталы — доп. проходы врагов; башни разрушают их по HP. */
+  ENEMY_BURROW: {
+    // Отключено: дополнительные проходы (порталы) не появляются.
+    MAX_ACTIVE: 0,
+    ATTEMPT_INTERVAL_MS_MIN: 4200,
+    ATTEMPT_INTERVAL_MS_MAX: 8800,
+    SPAWN_CHANCE: 0,
+  },
   /** Кристаллы за убийство босса (волны 10 / 20 / 30) */
   GEMS_BOSS_KILL: 5,
   /** За завершение любой волны */
@@ -29,6 +45,7 @@ var GAME_CONFIG = {
     easy: { hpMul: 0.78, speedMul: 0.88, livesBonus: 4, goldBonus: 55, label: "Лёгкая" },
     normal: { hpMul: 1, speedMul: 1, livesBonus: 0, goldBonus: 0, label: "Обычная" },
     hard: { hpMul: 1.32, speedMul: 1.12, livesBonus: -4, goldBonus: -35, label: "Сложная" },
+    impossible: { hpMul: 1.85, speedMul: 1.22, livesBonus: -7, goldBonus: -70, label: "Невозможно" },
   },
 
   /** Промокоды (регистр не важен). Можно добавлять свои. */

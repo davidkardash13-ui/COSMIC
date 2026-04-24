@@ -661,9 +661,9 @@ body.view-game .screen-game .game-hud {
 body.view-game .screen-game .game-wrap {
   flex: 1 1 auto;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1rem;
   min-height: min(520px, calc(100dvh - 220px));
   padding: 0.5rem 0 0.25rem;
@@ -677,8 +677,17 @@ body.view-game .tower-panel {
   align-self: stretch;
   display: flex;
   flex-direction: column;
+  flex: 0 0 200px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
   max-height: min(560px, calc(100dvh - 200px));
   overflow: hidden;
+}
+
+body.view-game .canvas-frame {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 body.view-game .tower-list {
@@ -777,9 +786,10 @@ body.view-game .tower-list {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  margin: 0 auto 1.75rem;
+  gap: 0.55rem;
+  margin: 0 auto 1.35rem;
   max-width: 520px;
+  padding: 0.35rem 0.25rem 0;
 }
 
 .difficulty-label {
@@ -789,14 +799,26 @@ body.view-game .tower-list {
   color: var(--text-muted);
   width: 100%;
   text-align: center;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.diff-grid {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 auto 1.25rem;
+  max-width: 520px;
+}
+
+.diff-grid__row {
+  margin-bottom: 0;
+  padding-top: 0.2rem;
 }
 
 @media (min-width: 480px) {
   .difficulty-label {
-    width: auto;
-    margin-bottom: 0;
-    margin-right: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.25rem;
+    margin-right: 0;
   }
 }
 
@@ -804,16 +826,37 @@ body.view-game .tower-list {
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.52rem 1.15rem;
+  padding: 0.56rem 1rem;
   border: none;
   clip-path: var(--btn-clip-wide);
   background: var(--btn-surface-title);
   color: #e0f2fe;
+  min-width: 10.25rem;
+  text-align: center;
   box-shadow:
     0 3px 0 #000,
     0 6px 20px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(165, 243, 252, 0.2);
   transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.25s ease, color 0.2s ease;
+}
+
+.diff-chip:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.8),
+    0 4px 0 #000,
+    0 12px 30px rgba(56, 189, 248, 0.22);
+}
+
+.diff-chip--mode {
+  min-width: 11.5rem;
+}
+
+@media (max-width: 420px) {
+  .diff-chip,
+  .diff-chip--mode {
+    min-width: 100%;
+  }
 }
 
 .diff-chip:hover {
@@ -2418,9 +2461,9 @@ body.view-game .tower-list {
 .game-wrap {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: center;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 /* Фон как у клеток поля в td.js (шахматка 40px), если под канвасом есть поле рамки — не градиент, а плитка */
@@ -2749,6 +2792,18 @@ body.view-game .tower-list {
     0 0 0 1px rgba(248, 113, 113, 0.45),
     0 4px 0 #020617,
     0 12px 36px rgba(220, 38, 38, 0.22);
+}
+
+.difficulty-modal .diff-chip--impossible {
+  background: linear-gradient(125deg, rgba(220, 38, 38, 0.28), rgba(124, 58, 237, 0.2), rgba(15, 23, 42, 0.92));
+  border: 1px solid rgba(248, 113, 113, 0.26);
+}
+
+.difficulty-modal .diff-chip--impossible.diff-chip--active {
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.58),
+    0 4px 0 #020617,
+    0 14px 42px rgba(220, 38, 38, 0.3);
 }
 
 .difficulty-modal-actions {
@@ -3111,10 +3166,16 @@ body.view-game .tower-list {
 @media (max-width: 900px) {
   .game-wrap {
     flex-direction: column;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
   }
 
   .tower-panel {
+    flex: 1 1 auto;
     width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 
   .tower-list {

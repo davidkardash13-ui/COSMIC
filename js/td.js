@@ -4,18 +4,57 @@ var TDGame = (function () {
   var TILE = 40;
   var CW = GW * TILE;
   var CH = GH * TILE;
+
+  /** Случайные GW/GH и пиксели холста; вызывать перед генерацией пути и при старте боя. */
+  function rollMapDimensions(rng) {
+    var C =
+      typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.MAP_GRID ? GAME_CONFIG.MAP_GRID : {};
+    var wMin = typeof C.W_MIN === "number" ? C.W_MIN : 18;
+    var wMax = typeof C.W_MAX === "number" ? C.W_MAX : 32;
+    var hMin = typeof C.H_MIN === "number" ? C.H_MIN : 9;
+    var hMax = typeof C.H_MAX === "number" ? C.H_MAX : 18;
+    if (wMax < wMin) wMax = wMin;
+    if (hMax < hMin) hMax = hMin;
+    var wr = wMax - wMin;
+    var hr = hMax - hMin;
+    var cat = Math.floor(rng() * 3);
+    var wLo,
+      wHi,
+      hLo,
+      hHi;
+    if (cat === 0) {
+      wLo = wMin + Math.floor(wr * 0.35);
+      wHi = wMax;
+      hLo = hMin;
+      hHi = hMin + Math.floor(hr * 0.55);
+    } else if (cat === 1) {
+      wLo = wMin;
+      wHi = wMin + Math.floor(wr * 0.55);
+      hLo = hMin + Math.floor(hr * 0.3);
+      hHi = hMax;
+    } else {
+      wLo = wMin;
+      wHi = wMax;
+      hLo = hMin;
+      hHi = hMax;
+    }
+    if (wHi < wLo) wHi = wLo;
+    if (hHi < hLo) hHi = hLo;
+    GW = wLo + Math.floor(rng() * (wHi - wLo + 1));
+    GH = hLo + Math.floor(rng() * (hHi - hLo + 1));
+    GW = Math.max(wMin, Math.min(wMax, GW));
+    GH = Math.max(hMin, Math.min(hMax, GH));
+    CW = GW * TILE;
+    CH = GH * TILE;
+  }
   /** Уровни улучшения: 0 = база, макс. 2 (три визуальных яруса) */
   var TOWER_UPGRADE_MAX = 2;
 
-  /** Запасной фиксированный маршрут, если случайная генерация не удалась */
+  /** Запасной маршрут (слева направо), если случайная генерация не удалась */
   function buildPathTilesFallback() {
+    var y = Math.max(1, Math.min(GH - 2, (GH >> 1)));
     var tiles = [];
-    var x, y;
-    for (x = 0; x <= 11; x++) tiles.push([x, 6]);
-    for (y = 5; y >= 2; y--) tiles.push([11, y]);
-    for (x = 12; x <= 20; x++) tiles.push([x, 2]);
-    for (y = 3; y <= 9; y++) tiles.push([20, y]);
-    for (x = 21; x <= 23; x++) tiles.push([x, 9]);
+    for (var x = 0; x < GW; x++) tiles.push([x, y]);
     return tiles;
   }
 
@@ -53,7 +92,7 @@ var TDGame = (function () {
    */
   function randomPathTiles() {
     var rng = Math.random;
-    var minLen = 26;
+    var minLen = Math.max(18, Math.floor(GW * 0.85 + GH * 0.45));
     var maxAttempts = 100;
     var pool = [];
     var px;
@@ -181,7 +220,9 @@ var TDGame = (function () {
     var pm0 = buildPathModel(wp0);
     var singleLane = function () {
       var pk = buildPathKeyFromTiles(baseTiles);
-      return finalizeWithCave(baseTiles, pk, [{ waypoints: wp0, pathModel: pm0 }], rng);
+      var out = finalizeWithCave(baseTiles, pk, [{ waypoints: wp0, pathModel: pm0 }], rng);
+      out.baseTiles = baseTiles;
+      return out;
     };
 
     var numLanes = 1 + Math.floor(rng() * 3);
@@ -221,7 +262,9 @@ var TDGame = (function () {
       }
     }
 
-    return finalizeWithCave(baseTiles, allKeys, lanes, rng);
+    var fin = finalizeWithCave(baseTiles, allKeys, lanes, rng);
+    fin.baseTiles = baseTiles;
+    return fin;
   }
 
   /**
@@ -270,6 +313,55 @@ var TDGame = (function () {
           caveLane: { waypoints: wp, pathModel: pm, isCave: true },
           spurTiles: spur,
           caveOnlyKey: caveOnlyKey,
+        };
+      }
+    }
+    return null;
+  }
+
+  /** Ветка «Портал»: как пещера, но создаётся в бою и имеет HP (башни разрушают). */
+  function tryAddEnemyBurrowLane(baseTiles, pathKey, rng) {
+    if (baseTiles.length < 18) return null;
+    var minI = Math.max(5, Math.floor(baseTiles.length * 0.4));
+    var maxI = Math.min(baseTiles.length - 5, Math.floor(baseTiles.length * 0.68));
+    if (maxI <= minI) return null;
+    var attempt, branchIdx, bx, by, di, dx, dy, len, step, nx, ny, spur, walk, ri, ti, wp, pm, burrowOnlyKey, si;
+    for (attempt = 0; attempt < 48; attempt++) {
+      branchIdx = minI + Math.floor(rng() * (maxI - minI + 1));
+      bx = baseTiles[branchIdx][0];
+      by = baseTiles[branchIdx][1];
+      var dirs = [
+        [0, 1],
+        [0, -1],
+        [1, 0],
+        [-1, 0],
+      ];
+      shuffleInPlace(dirs, rng);
+      for (di = 0; di < 4; di++) {
+        dx = dirs[di][0];
+        dy = dirs[di][1];
+        len = 5 + Math.floor(rng() * 3);
+        spur = [[bx, by]];
+        for (step = 1; step <= len; step++) {
+          nx = bx + dx * step;
+          ny = by + dy * step;
+          if (nx < 1 || ny < 1 || nx >= GW - 1 || ny >= GH - 1) break;
+          if (pathKey[nx + "," + ny]) break;
+          spur.push([nx, ny]);
+        }
+        if (spur.length < 6) continue;
+        walk = [];
+        for (ri = spur.length - 1; ri >= 0; ri--) appendPathTile(walk, spur[ri][0], spur[ri][1]);
+        for (ti = branchIdx + 1; ti < baseTiles.length; ti++) appendPathTile(walk, baseTiles[ti][0], baseTiles[ti][1]);
+        if (!validateOrthogonalPath(walk) || !pathHasNoRevisit(walk)) continue;
+        wp = pixelWaypointsFromTiles(walk);
+        pm = buildPathModel(wp);
+        burrowOnlyKey = {};
+        for (si = 1; si < spur.length; si++) burrowOnlyKey[spur[si][0] + "," + spur[si][1]] = true;
+        return {
+          burrowLane: { waypoints: wp, pathModel: pm, isEnemyBurrow: true },
+          spurTiles: spur,
+          burrowOnlyKey: burrowOnlyKey,
         };
       }
     }
@@ -1039,6 +1131,11 @@ var TDGame = (function () {
 
   function Game(canvas, bonuses, opts) {
     opts = opts || {};
+    rollMapDimensions(Math.random);
+    if (canvas) {
+      canvas.width = CW;
+      canvas.height = CH;
+    }
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     if (this.ctx.imageSmoothingEnabled !== undefined) this.ctx.imageSmoothingEnabled = true;
@@ -1052,11 +1149,17 @@ var TDGame = (function () {
     this.difficulty = diffKey;
     this._diffHpMul = D.hpMul;
     this._diffSpeedMul = D.speedMul;
+    this.gameMode = opts.gameMode || "defense";
     var multi = buildMultiLanePath(Math.random);
     this.pathKey = multi.pathKey;
     this.pathLanes = multi.lanes;
     this.caveLane = multi.caveLane || null;
     this.caveOnlyKey = multi.caveOnlyKey || {};
+    this._basePathTiles = multi.baseTiles || null;
+    this.burrowOnlyKey = {};
+    this.enemyBurrows = [];
+    this._nextBurrowId = 1;
+    this._burrowSpawnTimer = 2000 + Math.random() * 2500;
     this.waypoints = multi.lanes[0].waypoints;
     this.pathModel = multi.lanes[0].pathModel;
     this.lives = GAME_CONFIG.START_LIVES + D.livesBonus;
@@ -1209,8 +1312,9 @@ var TDGame = (function () {
           py = gy * TILE;
           onPath = this.cellOnPath(gx, gy);
           var caveCell = this.caveOnlyKey && this.caveOnlyKey[gx + "," + gy];
+          var burrowCell = this.burrowOnlyKey && this.burrowOnlyKey[gx + "," + gy];
           tileGrad = ctx.createLinearGradient(px, py, px + TILE, py + TILE);
-          if (onPath && caveCell) {
+          if (onPath && caveCell && !burrowCell) {
             tileGrad.addColorStop(0, "rgba(55, 48, 70, 0.99)");
             tileGrad.addColorStop(1, "rgba(30, 24, 42, 0.98)");
           } else if (onPath) {
@@ -1226,7 +1330,9 @@ var TDGame = (function () {
           ctx.fillStyle = tileGrad;
           ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
           if (onPath) {
-            ctx.strokeStyle = caveCell ? "rgba(196, 181, 253, 0.22)" : "rgba(94, 234, 212, 0.16)";
+            ctx.strokeStyle = caveCell && !burrowCell
+              ? "rgba(196, 181, 253, 0.22)"
+              : "rgba(94, 234, 212, 0.16)";
             ctx.lineWidth = 1;
             ctx.strokeRect(px + 1.5, py + 1.5, TILE - 3, TILE - 3);
           }
@@ -1274,6 +1380,30 @@ var TDGame = (function () {
         ctx.lineWidth = 2.6;
         ctx.stroke();
         ctx.restore();
+      }
+
+      if (this.enemyBurrows && this.enemyBurrows.length) {
+        for (var ebi = 0; ebi < this.enemyBurrows.length; ebi++) {
+          var eb = this.enemyBurrows[ebi];
+          if (!eb || !eb.lane || !eb.lane.waypoints || eb.lane.waypoints.length < 2) continue;
+          var ewp = eb.lane.waypoints;
+          ctx.save();
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          for (var ew = 0; ew < ewp.length; ew++) {
+            var ept = ewp[ew];
+            if (ew === 0) ctx.moveTo(ept.x, ept.y);
+            else ctx.lineTo(ept.x, ept.y);
+          }
+          ctx.strokeStyle = "rgba(45, 212, 191, 0.12)";
+          ctx.lineWidth = 11;
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(165, 243, 252, 0.75)";
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+          ctx.restore();
+        }
       }
     } catch (e) {}
   };
@@ -1347,6 +1477,182 @@ var TDGame = (function () {
     return true;
   };
 
+  Game.prototype._applyDamageToBurrow = function (burrow, amount) {
+    if (!burrow || burrow._gone || burrow.hp <= 0 || amount <= 0) return;
+    burrow.hp -= amount;
+    if (burrow.hp <= 0) this._destroyEnemyBurrow(burrow);
+  };
+
+  Game.prototype._destroyEnemyBurrow = function (br) {
+    if (!br || br._gone) return;
+    br._gone = true;
+    var i,
+      e,
+      pk,
+      ci;
+    for (i = this.enemies.length - 1; i >= 0; i--) {
+      e = this.enemies[i];
+      if (e.pathModel === br.lane.pathModel) {
+        this.enemies.splice(i, 1);
+      }
+    }
+    if (br.spurTiles) {
+      for (ci = 1; ci < br.spurTiles.length; ci++) {
+        pk = br.spurTiles[ci][0] + "," + br.spurTiles[ci][1];
+        delete this.pathKey[pk];
+        if (this.burrowOnlyKey) delete this.burrowOnlyKey[pk];
+      }
+    }
+    var idx = this.enemyBurrows.indexOf(br);
+    if (idx >= 0) this.enemyBurrows.splice(idx, 1);
+    this._staticLayer = null;
+    this._buildStaticLayer();
+    this._addParticles(br.cx, br.cy, "#a78bfa", 10);
+    this._addParticles(br.cx, br.cy, "#22d3ee", 8);
+  };
+
+  Game.prototype._trySpawnEnemyBurrow = function () {
+    if (!this._basePathTiles || this._basePathTiles.length < 18) return;
+    var C = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ENEMY_BURROW ? GAME_CONFIG.ENEMY_BURROW : {};
+    var maxB = typeof C.MAX_ACTIVE === "number" ? C.MAX_ACTIVE : 2;
+    if (this.enemyBurrows.length >= maxB) return;
+    var out = tryAddEnemyBurrowLane(this._basePathTiles, this.pathKey, Math.random);
+    if (!out) return;
+    var w = this.waveIndex || 0;
+    var maxHp = 130 + w * 36 + (this._diffHpMul > 1 ? 40 : 0);
+    var br = {
+      id: this._nextBurrowId++,
+      hp: maxHp,
+      maxHp: maxHp,
+      lane: out.burrowLane,
+      spurTiles: out.spurTiles,
+      cx: out.burrowLane.waypoints[0].x,
+      cy: out.burrowLane.waypoints[0].y,
+      _gone: false,
+    };
+    var si;
+    for (si = 1; si < out.spurTiles.length; si++) {
+      var cc = out.spurTiles[si];
+      this.pathKey[cc[0] + "," + cc[1]] = true;
+      this.burrowOnlyKey[cc[0] + "," + cc[1]] = true;
+    }
+    this.enemyBurrows.push(br);
+    this._staticLayer = null;
+    this._buildStaticLayer();
+  };
+
+  Game.prototype._pushProjBurrow = function (tw, def, st, burrow, o) {
+    o = o || {};
+    var tx = burrow.cx,
+      ty = burrow.cy;
+    this.projectiles.push({
+      x: tw.x,
+      y: tw.y,
+      tx: tx,
+      ty: ty,
+      damage: o.damage != null ? o.damage : st.damage,
+      splash: o.splash != null ? o.splash : st.splash,
+      slow: o.slow != null ? o.slow : st.slow,
+      color: def.color,
+      homing: null,
+      speed: o.speed != null ? o.speed : 0.65,
+      mechanic: def.mechanic || "standard",
+      towerUid: tw.uid,
+      midas: def.mechanic === "midas",
+      longshotMul: o.longshotMul != null ? o.longshotMul : 1,
+      armorPierce: def.mechanic === "armor_pierce" ? 0.42 : 1,
+      burrowRef: burrow,
+    });
+  };
+
+  Game.prototype._fireTowerAttackBurrow = function (tw, def, st, burrow) {
+    var mech = def.mechanic || "standard";
+    var tx = burrow.cx,
+      ty = burrow.cy;
+    var dratio = dist(tw.x, tw.y, tx, ty) / Math.max(1, st.range);
+    var longshotMul = mech === "longshot" && dratio > 0.86 ? 1.32 : 1;
+    var dmg = st.damage;
+    if (mech === "overload") {
+      tw.shotCount = (tw.shotCount || 0) + 1;
+      if (tw.shotCount % 3 === 0) dmg *= 2;
+    }
+    var slowUse = st.slow;
+    if (mech === "deep_chill") slowUse = 0.44;
+    if (mech === "gust_slow") slowUse = 0.38;
+    var splashUse = st.splash;
+    if (mech === "siege") splashUse = st.splash * 1.28;
+    var isExec = mech === "execute";
+    var isCres = mech === "crescent";
+    var isMidas = mech === "midas";
+    var ap = mech === "armor_pierce" ? 0.42 : 1;
+
+    if (mech === "beam") {
+      this.visualBeams.push({ x1: tw.x, y1: tw.y, x2: tx, y2: ty, color: def.color, life: 160 });
+      this._applyDamageToBurrow(burrow, dmg * longshotMul);
+      tw.cooldownLeft = st.cooldown;
+      return;
+    }
+
+    if (mech === "ray") {
+      this.visualBeams.push({ x1: tw.x, y1: tw.y, x2: tx, y2: ty, color: def.color, life: 220 });
+      var ri;
+      for (ri = 0; ri < this.enemies.length; ri++) {
+        var en = this.enemies[ri];
+        if (distPointToSegment(en.x, en.y, tw.x, tw.y, tx, ty) < en.r + 16) {
+          this._damageEnemy(en, dmg * 0.9, 0, def.color, {
+            execute: isExec,
+            crescent: isCres,
+            armorPierce: ap,
+            longshotMul: longshotMul,
+            midas: isMidas,
+          });
+        }
+      }
+      this._applyDamageToBurrow(burrow, dmg * 0.95 * longshotMul);
+      tw.cooldownLeft = st.cooldown;
+      return;
+    }
+
+    if (mech === "twin") {
+      this._pushProjBurrow(tw, def, st, burrow, {
+        damage: dmg * 1.16 * longshotMul,
+        splash: splashUse,
+        slow: slowUse,
+        longshotMul: longshotMul,
+      });
+      tw.cooldownLeft = st.cooldown;
+      return;
+    }
+    if (mech === "volley") {
+      this._pushProjBurrow(tw, def, st, burrow, {
+        damage: dmg * 1.08 * longshotMul,
+        splash: 0,
+        slow: slowUse,
+        longshotMul: longshotMul,
+      });
+      tw.cooldownLeft = st.cooldown;
+      return;
+    }
+    if (mech === "double_tap") {
+      this._pushProjBurrow(tw, def, st, burrow, {
+        damage: dmg * 1.76 * longshotMul,
+        splash: splashUse,
+        slow: slowUse,
+        longshotMul: longshotMul,
+      });
+      tw.cooldownLeft = st.cooldown;
+      return;
+    }
+
+    this._pushProjBurrow(tw, def, st, burrow, {
+      damage: dmg * longshotMul,
+      splash: splashUse,
+      slow: slowUse,
+      longshotMul: longshotMul,
+    });
+    tw.cooldownLeft = st.cooldown;
+  };
+
   Game.prototype.startWave = function () {
     if (this.waveIndex >= this.maxWaves) return;
     if (this.waveActive) return;
@@ -1358,13 +1664,13 @@ var TDGame = (function () {
     this.waveCleared = false;
     this._spawnedThisWave = 0;
     var w = this.waveIndex;
-    var count = 11 + ((w * 2.95) | 0);
+    var count = this.gameMode === "raid" ? 1 : 11 + ((w * 2.95) | 0);
     if (count > 86) count = 86;
     this._toSpawnThisWave = count;
     this.spawnTimer = 0;
 
     var midSlot = -1;
-    if (w === 10 || w === 20 || w === 30) {
+    if (this.gameMode !== "raid" && (w === 10 || w === 20 || w === 30)) {
       if (count >= 3) {
         midSlot = Math.floor(count * 0.36);
         midSlot = Math.max(1, Math.min(count - 2, midSlot));
@@ -1511,22 +1817,46 @@ var TDGame = (function () {
   Game.prototype._spawnOne = function () {
     var spec = this._waveSpec;
     var w = this.waveIndex;
-    var milestone = w === 10 || w === 20 || w === 30;
+    var isRaid = this.gameMode === "raid";
+    var milestone = !isRaid && (w === 10 || w === 20 || w === 30);
     var slot = this._spawnedThisWave;
     var total = this._toSpawnThisWave;
     var endBoss = milestone && slot === total - 1;
     var midBoss = milestone && this._bossMidSlot >= 0 && slot === this._bossMidSlot;
-    var isBossSpawn = endBoss || midBoss;
+    var isBossSpawn = isRaid || endBoss || midBoss;
     var useCave =
       !isBossSpawn &&
       this.caveLane &&
       Math.random() < 0.028;
-    var kindId = isBossSpawn ? "boss" : useCave ? this._pickCaveEnemyKind() : this._pickEnemyKindId();
+    var useBurrow = false;
+    var burrowPick = null;
+    if (!isRaid && !isBossSpawn && !useCave && this.enemyBurrows && this.enemyBurrows.length) {
+      var aliveBur = [];
+      for (var bi = 0; bi < this.enemyBurrows.length; bi++) {
+        var bb = this.enemyBurrows[bi];
+        if (bb && !bb._gone && bb.hp > 0 && bb.lane) aliveBur.push(bb);
+      }
+      if (aliveBur.length && Math.random() < 0.024) {
+        useBurrow = true;
+        burrowPick = aliveBur[Math.floor(Math.random() * aliveBur.length)];
+      }
+    }
+    var kindId = isBossSpawn
+      ? "boss"
+      : useCave || useBurrow
+        ? this._pickCaveEnemyKind()
+        : this._pickEnemyKindId();
     var K = ENEMY_KINDS[kindId] || ENEMY_KINDS.grunt;
 
     var hp = spec.hp * K.hpMul;
     if (useCave) hp *= 1.88;
+    if (useBurrow) hp *= 1.62;
     if (kindId === "boss") {
+      if (isRaid) {
+        // «Рейд»: один босс на волну; рост силы — плавный (чтобы режим был про билд, а не про «стену»).
+        // На поздних волнах бонус всё равно существенный, но без резких скачков.
+        hp *= 2.25 + (w - 1) * 0.11;
+      }
       if (midBoss) {
         if (w === 10) hp *= 1.15;
         if (w === 20) hp *= 1.22;
@@ -1538,18 +1868,23 @@ var TDGame = (function () {
         if (w === 30) hp *= 1.85;
       }
     }
-    var spd = spec.speed * K.speedMul * (useCave ? 0.9 : 1);
-    var arm = Math.min(0.56, (spec.armor || 0) + K.armorAdd + (useCave ? 0.05 : 0));
-    var rw = spec.reward * K.rewardMul * (useCave ? 1.38 : 1);
+    var spd = spec.speed * K.speedMul * (useCave ? 0.9 : useBurrow ? 0.93 : 1);
+    if (isRaid && kindId === "boss") spd = Math.min(spd * (1.01 + w * 0.0025), 3.05);
+    var arm = Math.min(0.56, (spec.armor || 0) + K.armorAdd + (useCave ? 0.05 : useBurrow ? 0.04 : 0));
+    if (isRaid && kindId === "boss") arm = Math.min(0.52, arm + 0.015 + w * 0.0025);
+    var rw = spec.reward * K.rewardMul * (useCave ? 1.38 : useBurrow ? 1.26 : 1);
+    if (isRaid && kindId === "boss") rw *= 3.6;
 
     var lane = useCave
       ? this.caveLane
-      : this.pathLanes[Math.floor(Math.random() * this.pathLanes.length)];
+      : useBurrow && burrowPick
+        ? burrowPick.lane
+        : this.pathLanes[Math.floor(Math.random() * this.pathLanes.length)];
     var lanePm = lane.pathModel;
     var laneWp = lane.waypoints;
     var bossVariant = null;
     if (kindId === "boss") {
-      bossVariant = w === 10 ? "hydra" : w === 20 ? "warden" : w === 30 ? "reaver" : "boss";
+      bossVariant = isRaid ? (w < 10 ? "hydra" : w < 20 ? "warden" : "reaver") : w === 10 ? "hydra" : w === 20 ? "warden" : w === 30 ? "reaver" : "boss";
       // Конфигурация способностей (таймеры в мс)
       // hydra: призывает мелочь; warden: периодический щит; reaver: рывок вперёд.
     }
@@ -1576,6 +1911,7 @@ var TDGame = (function () {
       slowResist: Math.min(0.85, Math.max(0, (K.slowResist || 0) + this._modifierAdd("slowResistAdd", 0))),
       regen: typeof K.regen === "number" ? K.regen : 0,
       fromCave: !!useCave,
+      fromBurrow: !!useBurrow,
       bossVariant: bossVariant,
       titanVariant: titanVariant,
       _lifeT: 0,
@@ -1621,6 +1957,7 @@ var TDGame = (function () {
       slowResist: K.slowResist,
       regen: typeof K.regen === "number" ? K.regen : 0,
       fromCave: !!src.fromCave,
+      fromBurrow: !!src.fromBurrow,
       _lifeT: 0,
       _hx: pos.x,
       _hy: pos.y,
@@ -1671,6 +2008,20 @@ var TDGame = (function () {
     this.animTime = (this.animTime || 0) + dt;
     if (!this.running) return;
 
+    var EB = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ENEMY_BURROW ? GAME_CONFIG.ENEMY_BURROW : {};
+    this._burrowSpawnTimer = (this._burrowSpawnTimer || 0) - dt;
+    if (this._burrowSpawnTimer <= 0) {
+      var ebLo = typeof EB.ATTEMPT_INTERVAL_MS_MIN === "number" ? EB.ATTEMPT_INTERVAL_MS_MIN : 4200;
+      var ebHi = typeof EB.ATTEMPT_INTERVAL_MS_MAX === "number" ? EB.ATTEMPT_INTERVAL_MS_MAX : 8800;
+      if (ebHi < ebLo) ebHi = ebLo;
+      this._burrowSpawnTimer = ebLo + Math.random() * (ebHi - ebLo);
+      var ebChance = typeof EB.SPAWN_CHANCE === "number" ? EB.SPAWN_CHANCE : 0.1;
+      var ebMax = typeof EB.MAX_ACTIVE === "number" ? EB.MAX_ACTIVE : 2;
+      if (ebChance > 0 && ebMax > 0 && this.waveActive && Math.random() < ebChance) {
+        this._trySpawnEnemyBurrow();
+      }
+    }
+
     if (
       this.autoNextWave &&
       !this.waveActive &&
@@ -1698,6 +2049,10 @@ var TDGame = (function () {
       this.waveActive = false;
       this.waveCleared = true;
       var wr = typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.WAVE_REWARD ? GAME_CONFIG.WAVE_REWARD : 0;
+      // «Рейд»: волна = босс, поэтому награда за зачистку выше.
+      if (this.gameMode === "raid") {
+        wr = Math.floor(wr * (2.6 + this.waveIndex * 0.045));
+      }
       this.gold += wr;
       this.sessionGoldEarned += wr;
       // Пассивный доход ферм за каждую пройденную волну
@@ -1715,6 +2070,10 @@ var TDGame = (function () {
       }
       var wi = this.waveIndex;
       if (GAME_CONFIG.GEMS_WAVE_CLEAR) this.runGems += GAME_CONFIG.GEMS_WAVE_CLEAR;
+      if (this.gameMode === "raid") {
+        // Доп. кристаллы за каждую очищенную волну в рейде.
+        this.runGems += 1 + Math.floor(wi / 10);
+      }
       if (wi % 5 === 0 && GAME_CONFIG.GEMS_EVERY_5_WAVES) this.runGems += GAME_CONFIG.GEMS_EVERY_5_WAVES;
       if (wi === 10 || wi === 20 || wi === 30) this.runGems += GAME_CONFIG.GEMS_MILESTONE_WAVE;
       if (this.waveIndex >= this.maxWaves) {
@@ -1985,9 +2344,25 @@ var TDGame = (function () {
           target = e;
         }
       }
-      if (!target) continue;
+      if (target) {
+        this._fireTowerAttack(tw, def, st, target);
+        continue;
+      }
 
-      this._fireTowerAttack(tw, def, st, target);
+      var burrowT = null,
+        bestB = Infinity;
+      if (this.enemyBurrows && this.enemyBurrows.length) {
+        for (var bj = 0; bj < this.enemyBurrows.length; bj++) {
+          var brw = this.enemyBurrows[bj];
+          if (!brw || brw._gone || brw.hp <= 0) continue;
+          var db = dist(tw.x, tw.y, brw.cx, brw.cy);
+          if (db <= st.range && db < bestB) {
+            bestB = db;
+            burrowT = brw;
+          }
+        }
+      }
+      if (burrowT) this._fireTowerAttackBurrow(tw, def, st, burrowT);
     }
   };
 
@@ -2033,6 +2408,43 @@ var TDGame = (function () {
       ty = p.ty,
       dmg = p.damage;
     var sx = p.splash || 0;
+
+    if (p.burrowRef) {
+      var brf = p.burrowRef;
+      if (brf && !brf._gone && brf.hp > 0) {
+        this._applyDamageToBurrow(brf, dmg);
+      }
+      if (sx > 0) {
+        var ib;
+        for (ib = 0; ib < this.enemies.length; ib++) {
+          var eb = this.enemies[ib];
+          if (dist(eb.x, eb.y, tx, ty) <= sx) {
+            var fallB = dist(eb.x, eb.y, tx, ty) < 18 ? 1 : 0.55;
+            var esB = null;
+            var bdurB = 2200;
+            if (mech === "corrupt_splash") esB = 0.17;
+            if (mech === "bloom") {
+              esB = 0.26;
+              bdurB = 2800;
+            }
+            var slB = p.slow && fallB >= 0.9 ? p.slow : 0;
+            this._damageEnemy(eb, dmg * fallB, slB, p.color, {
+              towerUid: p.towerUid,
+              midas: p.midas,
+              longshotMul: p.longshotMul || 1,
+              armorPierce: p.armorPierce != null ? p.armorPierce : 1,
+              execute: mech === "execute",
+              crescent: mech === "crescent",
+              extraSlow: esB,
+              bloomDuration: bdurB,
+              dotBurn: fallB >= 0.95 && mech === "burn" ? { dps: 2.8, t: 2800 } : null,
+              dotPoison: fallB >= 0.95 && mech === "poison" ? { dps: 3.2, t: 3200 } : null,
+            });
+          }
+        }
+      }
+      return;
+    }
 
     if (sx > 0) {
       var i;
@@ -2122,6 +2534,12 @@ var TDGame = (function () {
     this.sessionGoldEarned += rw;
     if (e.kind === "boss" && GAME_CONFIG.GEMS_BOSS_KILL) this.runGems += GAME_CONFIG.GEMS_BOSS_KILL;
     if (e.kind === "titan" && GAME_CONFIG.GEMS_TITAN_KILL) this.runGems += GAME_CONFIG.GEMS_TITAN_KILL;
+    if (this.gameMode === "raid" && e.kind === "boss") {
+      // В рейде босс — каждый раз, поэтому добавляем скейлящиеся кристаллы за убийство.
+      // Растёт медленно, чтобы не ломать экономику, но ощущалось как «жирная награда».
+      var w = this.waveIndex | 0;
+      this.runGems += 2 + Math.floor(w / 6);
+    }
     var idx = this.enemies.indexOf(e);
     if (idx >= 0) this.enemies.splice(idx, 1);
     this._addParticles(e.x, e.y, "#fbbf24", 10);
@@ -2349,6 +2767,46 @@ var TDGame = (function () {
       ctx.fill();
 
       ctx.restore();
+    }
+
+    if (this.enemyBurrows && this.enemyBurrows.length) {
+      var ebr;
+      for (ebr = 0; ebr < this.enemyBurrows.length; ebr++) {
+        var ebrw = this.enemyBurrows[ebr];
+        if (!ebrw || ebrw._gone || !ebrw.lane || !ebrw.lane.waypoints || ebrw.lane.waypoints.length < 2) continue;
+        var ebwp = ebrw.lane.waypoints;
+        var alphaLnB = 0.78 + 0.08 * Math.sin(at * 0.002 + ebr * 0.7);
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        for (var ebw = 0; ebw < ebwp.length; ebw++) {
+          var ebpt = ebwp[ebw];
+          if (ebw === 0) ctx.moveTo(ebpt.x, ebpt.y);
+          else ctx.lineTo(ebpt.x, ebpt.y);
+        }
+        ctx.setLineDash([14, 12]);
+        ctx.lineDashOffset = -(at * 0.052 + ebr * 6) % 26;
+        ctx.strokeStyle = "rgba(45, 212, 191, " + (0.14 * alphaLnB) + ")";
+        ctx.lineWidth = 11;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        var bhx = ebrw.cx - 22;
+        var bhy = ebrw.cy - 28;
+        var bhw = 44;
+        roundRectPath(ctx, bhx, bhy, bhw, 5, 2);
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fill();
+        var bratio = ebrw.maxHp > 0 ? Math.max(0, Math.min(1, ebrw.hp / ebrw.maxHp)) : 0;
+        roundRectPath(ctx, bhx, bhy, bhw * bratio, 5, 2);
+        var phpg = ctx.createLinearGradient(bhx, bhy, bhx + bhw * bratio, bhy);
+        phpg.addColorStop(0, "#5eead4");
+        phpg.addColorStop(0.5, "#2dd4bf");
+        phpg.addColorStop(1, "#14b8a6");
+        ctx.fillStyle = phpg;
+        ctx.fill();
+      }
     }
 
     for (li = 0; li < lanes.length; li++) {

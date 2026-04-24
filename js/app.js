@@ -783,6 +783,7 @@
 
     gameInstance = new TDGame.Game(canvas, bonuses, {
       difficulty: opts.difficulty || state.difficulty || "normal",
+      gameMode: opts.gameMode || state.gameMode || "defense",
     });
     gameInstance.setOwnedHeroes(state.ownedHeroes);
     gameInstance.onUiUpdate = function () {
@@ -813,8 +814,11 @@
         persist();
         if (title) title.textContent = "Победа!";
         if (text) {
+          var gm = (gameInstance && gameInstance.gameMode) || state.gameMode || "defense";
           var baseMsg =
-            "Все 30 волон пройдены. Золото и кристаллы зачислены. На волнах 10, 20 и 30 — по два босса.";
+            gm === "raid"
+              ? "Все 30 волн пройдены. Золото и кристаллы зачислены. В режиме «Рейд» каждая волна — один усиливающийся босс."
+              : "Все 30 волн пройдены. Золото и кристаллы зачислены. На волнах 10, 20 и 30 — по два босса.";
           text.textContent = baseMsg;
         }
       } else {
@@ -931,10 +935,25 @@
     }
   }
 
+  function syncGameModeUi() {
+    var m = state.gameMode || "defense";
+    var chips = document.querySelectorAll(".diff-chip[data-gamemode]");
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle("diff-chip--active", chips[i].getAttribute("data-gamemode") === m);
+    }
+  }
+
   function bindDifficulty() {
     var chips = document.querySelectorAll(".diff-chip");
     for (var i = 0; i < chips.length; i++) {
       chips[i].addEventListener("click", function () {
+        var gm = this.getAttribute("data-gamemode");
+        if (gm) {
+          state.gameMode = gm;
+          syncGameModeUi();
+          persist();
+          return;
+        }
         var d = this.getAttribute("data-difficulty");
         if (!d) return;
         state.difficulty = d;
@@ -953,6 +972,7 @@
       });
     }
     syncDifficultyUi();
+    syncGameModeUi();
   }
 
   function bindNav() {

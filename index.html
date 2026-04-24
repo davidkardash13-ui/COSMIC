@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- При выкладке увеличьте ?v= у styles и script (сброс кэша на GitHub Pages и в браузере). -->
-  <link rel="stylesheet" href="css/styles.css?v=18" />
+  <link rel="stylesheet" href="css/styles.css?v=21" />
 </head>
 <body class="is-loading">
   <div id="app-loader" class="app-loader" aria-busy="true" aria-live="polite" role="status">
@@ -127,11 +127,19 @@
           <h2 id="difficulty-modal-title">Сложность волны</h2>
         </header>
         <p class="difficulty-modal-desc" id="difficulty-modal-desc">Выберите сложность перед началом игры. Можно изменить при каждом запуске.</p>
-        <div class="difficulty-bar" role="radiogroup" aria-label="Сложность игры">
-          <span class="difficulty-label">Уровень угрозы</span>
-          <button type="button" class="diff-chip diff-chip--easy" data-difficulty="easy" id="diff-easy">Лёгкая</button>
-          <button type="button" class="diff-chip diff-chip--normal diff-chip--active" data-difficulty="normal" id="diff-normal">Обычная</button>
-          <button type="button" class="diff-chip diff-chip--hard" data-difficulty="hard" id="diff-hard">Сложная</button>
+        <div class="diff-grid" aria-label="Параметры игры">
+          <div class="difficulty-bar diff-grid__row" role="radiogroup" aria-label="Режим игры">
+            <span class="difficulty-label">Режим</span>
+            <button type="button" class="diff-chip diff-chip--mode diff-chip--active" data-gamemode="defense" id="mode-defense">Оборона</button>
+            <button type="button" class="diff-chip diff-chip--mode" data-gamemode="raid" id="mode-raid">Рейд</button>
+          </div>
+          <div class="difficulty-bar diff-grid__row" role="radiogroup" aria-label="Сложность игры">
+            <span class="difficulty-label">Уровень угрозы</span>
+            <button type="button" class="diff-chip diff-chip--easy" data-difficulty="easy" id="diff-easy">Лёгкая</button>
+            <button type="button" class="diff-chip diff-chip--normal diff-chip--active" data-difficulty="normal" id="diff-normal">Обычная</button>
+            <button type="button" class="diff-chip diff-chip--hard" data-difficulty="hard" id="diff-hard">Сложная</button>
+            <button type="button" class="diff-chip diff-chip--impossible" data-difficulty="impossible" id="diff-impossible">Невозможно</button>
+          </div>
         </div>
         <div class="difficulty-modal-actions">
           <button type="button" class="btn btn-secondary btn-diff-outline" id="btn-diff-cancel">Назад</button>
@@ -298,7 +306,7 @@
         <aside class="tower-panel" id="tower-panel">
           <h3 class="panel-title">Башни героев</h3>
           <div class="tower-list" id="tower-list"></div>
-          <p class="panel-hint" id="panel-hint">Пустая клетка — строительство. Редкость героя усиливает башню. ЛКМ — улучшение, ПКМ — снять (50% золота).</p>
+          <p class="panel-hint" id="panel-hint">Пустая клетка — строительство. Редкость героя усиливает башню. ЛКМ — улучшение, ПКМ — снять (50% золота). Порталы врагов можно разрушать башнями.</p>
         </aside>
       </div>
       <div id="game-overlay" class="game-overlay hidden">
@@ -353,12 +361,12 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=18"></script>
-  <script src="js/storage.js?v=18"></script>
-  <script src="js/heroes.js?v=18"></script>
-  <script src="js/cases.js?v=18"></script>
-  <script src="js/sounds.js?v=18"></script>
-  <script src="js/td.js?v=18"></script>
-  <script src="js/app.js?v=18"></script>
+  <script src="js/config.js?v=21"></script>
+  <script src="js/storage.js?v=21"></script>
+  <script src="js/heroes.js?v=21"></script>
+  <script src="js/cases.js?v=21"></script>
+  <script src="js/sounds.js?v=21"></script>
+  <script src="js/td.js?v=21"></script>
+  <script src="js/app.js?v=21"></script>
 </body>
 </html>
